@@ -1,11 +1,18 @@
 import { randomUUID } from "crypto";
 import { demoDoc, saveDemoDoc } from "@/lib/platform/demo-db";
 import { applyCheckIn } from "@/lib/platform/dates";
+import { starterJobs, type Job } from "@/lib/jobs";
 import { HANDLE_RE, suggestHandle } from "@/lib/platform/handle";
 import type { Store } from "@/lib/platform/store";
 import { StoreError, type Profile } from "@/lib/platform/types";
 
 const MAX_AVATAR_BYTES = 120_000;
+
+async function jobsOf(): Promise<{ doc: Awaited<ReturnType<typeof demoDoc>>; jobs: Job[] }> {
+  const doc = await demoDoc();
+  doc.jobs ??= starterJobs.map((j) => ({ ...j }));
+  return { doc, jobs: doc.jobs };
+}
 
 export const demoStore: Store = {
   async getProfileById(id) {
@@ -171,6 +178,49 @@ export const demoStore: Store = {
     const e = email.toLowerCase();
     if (doc.subscribers.some((s) => s.email === e)) return;
     doc.subscribers.push({ email: e, name, source, createdAt: new Date().toISOString() });
+    await saveDemoDoc(doc);
+  },
+
+  async isAdmin(user) {
+    const allowed = (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    return allowed.includes(user.email.toLowerCase());
+  },
+
+  async listJobs(opts) {
+    const { jobs } = await jobsOf();
+    return jobs.filter((j) => opts?.includeClosed || j.status === "open");
+  },
+
+  async getJob(slug, opts) {
+    const { jobs } = await jobsOf();
+    const job = jobs.find((j) => j.slug === slug);
+    return job && (opts?.includeClosed || job.status === "open") ? job : null;
+  },
+
+  async saveJob(input) {
+    const { doc, jobs } = await jobsOf();
+    const i = jobs.findIndex((j) => j.slug === input.slug);
+    const job: Job = { ...input, status: input.status ?? (i >= 0 ? (jobs[i] as Job).status : "open") };
+    if (i >= 0) jobs[i] = job;
+    else jobs.push(job);
+    await saveDemoDoc(doc);
+    return job;
+  },
+
+  async setJobStatus(slug, status) {
+    const { doc, jobs } = await jobsOf();
+    const job = jobs.find((j) => j.slug === slug);
+    if (!job) throw new StoreError("No such role.", 404);
+    job.status = status;
+    await saveDemoDoc(doc);
+  },
+
+  async deleteJob(slug) {
+    const { doc, jobs } = await jobsOf();
+    doc.jobs = jobs.filter((j) => j.slug !== slug);
     await saveDemoDoc(doc);
   },
 };

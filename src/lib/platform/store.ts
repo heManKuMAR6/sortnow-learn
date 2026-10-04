@@ -1,4 +1,5 @@
 import { isSupabaseConfigured } from "@/lib/env";
+import type { Job, JobInput } from "@/lib/jobs";
 import { demoStore } from "@/lib/platform/demo-store";
 import { supabaseStore } from "@/lib/platform/supabase-store";
 import type {
@@ -41,6 +42,14 @@ export interface Store {
   applyToJob(id: string, jobSlug: string, note: string): Promise<{ created: boolean }>;
   appliedJobs(id: string): Promise<string[]>;
   subscribe(email: string, name: string | null, source: string): Promise<void>;
+
+  /** Jobs board. Reads return open roles unless `includeClosed`; writes are for admins only. */
+  isAdmin(user: { id: string; email: string }): Promise<boolean>;
+  listJobs(opts?: { includeClosed?: boolean }): Promise<Job[]>;
+  getJob(slug: string, opts?: { includeClosed?: boolean }): Promise<Job | null>;
+  saveJob(input: JobInput): Promise<Job>;
+  setJobStatus(slug: string, status: Job["status"]): Promise<void>;
+  deleteJob(slug: string): Promise<void>;
 }
 
 export function getStore(): Store {

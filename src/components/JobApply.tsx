@@ -9,12 +9,10 @@ export function JobApply({
   slug,
   signedIn,
   applied: initiallyApplied,
-  applyUrl,
 }: {
   slug: string;
   signedIn: boolean;
   applied: boolean;
-  applyUrl?: string;
 }) {
   const router = useRouter();
   const [applied, setApplied] = useState(initiallyApplied);
@@ -25,10 +23,10 @@ export function JobApply({
   if (!signedIn) {
     return (
       <div className="glass p-6">
-        <h2 className="text-2xl">Interested?</h2>
-        <p className="mt-1 text-secondary">Sign in so we can share your profile with the hiring contact.</p>
+        <h2 className="text-2xl">Want us to see your profile too?</h2>
+        <p className="mt-1 text-secondary">Sign in and tap &ldquo;I&apos;m interested&rdquo; so sortNow can look at your profile, streak and portfolio.</p>
         <Link href={`/login?next=/jobs/${slug}`} className="pill-teal mt-4" data-track="job-signin">
-          Sign in to apply
+          Sign in
         </Link>
       </div>
     );
@@ -49,7 +47,7 @@ export function JobApply({
         return;
       }
       setApplied(true);
-      toast({ title: "Interest sent", body: "We will pass your profile along.", icon: "spark" });
+      toast({ title: "Interest noted", body: "Email us too so we know who to reply to.", icon: "spark" });
       router.refresh();
     } catch {
       setError("The line hiccuped. Try once more.");
@@ -62,13 +60,13 @@ export function JobApply({
     <div className="glass p-6">
       {applied ? (
         <>
-          <h2 className="text-2xl">You are on the list ✓</h2>
-          <p className="mt-1 text-secondary">We will pass your profile to the hiring contact.</p>
+          <h2 className="text-2xl">Noted ✓</h2>
+          <p className="mt-1 text-secondary">sortNow can see your interest and your profile. Email us too, so we know who to reply to.</p>
         </>
       ) : (
         <>
-          <h2 className="text-2xl">Apply for this role</h2>
-          <p className="mt-1 text-secondary">Your public profile is shared with the hiring contact. Add a note if you like.</p>
+          <h2 className="text-2xl">Share your profile with sortNow</h2>
+          <p className="mt-1 text-secondary">Optional. Lets us see your public profile. You still need to email us.</p>
           <textarea
             className="field mt-4 min-h-24"
             maxLength={800}
@@ -82,13 +80,6 @@ export function JobApply({
           </button>
         </>
       )}
-      {applyUrl ? (
-        <p className="mt-4 text-sm">
-          <a href={applyUrl} target="_blank" rel="noopener noreferrer" className="text-link" data-track="job-external">
-            Finish on the company site ↗
-          </a>
-        </p>
-      ) : null}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { StoreError } from "@/lib/platform/types";
+import { getStore } from "@/lib/platform/store";
 import { getCurrentUser, type AppUser } from "@/lib/session";
 
 export function bad(message: string, status = 400) {
@@ -39,4 +40,13 @@ export function httpUrl(value: unknown): string | null | undefined {
   } catch {
     return undefined;
   }
+}
+
+/** Admin-only routes answer 404 to everyone else, so they do not advertise themselves. */
+export async function requireAdmin(): Promise<{ user: AppUser } | { response: NextResponse }> {
+  const user = await getCurrentUser();
+  if (!user || !(await getStore().isAdmin(user).catch(() => false))) {
+    return { response: bad("Not found.", 404) };
+  }
+  return { user };
 }

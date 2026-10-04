@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
+import type { Job } from "@/lib/jobs";
 import type { PortfolioItem, Profile } from "@/lib/platform/types";
 
 // Local-demo persistence: one JSON document. It is written to data/platform.json
@@ -14,13 +15,15 @@ export type DemoDoc = {
   portfolio: (PortfolioItem & { userId: string })[];
   applications: { userId: string; jobSlug: string; note: string; createdAt: string }[];
   subscribers: { email: string; name: string | null; source: string; createdAt: string }[];
+  /** null until first use, then seeded from the starter listings. */
+  jobs: Job[] | null;
 };
 
 const filePath = path.join(process.cwd(), "data", "platform.json");
 const g = globalThis as unknown as { __snDemoDoc?: Promise<DemoDoc> };
 
 function empty(): DemoDoc {
-  return { profiles: {}, awards: [], activity: {}, portfolio: [], applications: [], subscribers: [] };
+  return { profiles: {}, awards: [], activity: {}, portfolio: [], applications: [], subscribers: [], jobs: null };
 }
 
 async function load(): Promise<DemoDoc> {
