@@ -20,12 +20,15 @@ export default function HomePage() {
         <p className="mt-5 max-w-xl text-lg text-secondary">
           Short videos, the points that matter, and a place to ask while you watch.
         </p>
-        <div className="mt-8 flex flex-wrap gap-3">
+        <div className="mt-8 flex flex-wrap items-center gap-3">
           <Link href="/learn" data-track="hero-lessons" className="pill-coral">
             Start a lesson
           </Link>
           <Link href="#notes" data-track="hero-notes" className="pill-white">
             Read the notes
+          </Link>
+          <Link href="/daily" data-track="hero-daily" className="text-sm font-medium text-link">
+            Daily practice
           </Link>
         </div>
       </section>

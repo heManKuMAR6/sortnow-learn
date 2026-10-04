@@ -1,15 +1,25 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { DEMO_COOKIE, parseDemoSession } from "@/lib/demo-session";
 import { isSupabaseConfigured } from "@/lib/env";
+import { readDisplayName } from "@/lib/practice";
 import { createClient } from "@/lib/supabase/server";
 
 export type AppUser = {
   id: string;
   email: string;
+  displayName: string | null;
   mode: "supabase" | "demo";
 };
 
-export async function getCurrentUser(): Promise<AppUser | null> {
+export const getCurrentUser = cache(async (): Promise<AppUser | null> => {
+  const base = await readAuthUser();
+  if (!base) return null;
+  const displayName = await readDisplayName(base);
+  return { ...base, displayName };
+});
+
+async function readAuthUser(): Promise<Omit<AppUser, "displayName"> | null> {
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();

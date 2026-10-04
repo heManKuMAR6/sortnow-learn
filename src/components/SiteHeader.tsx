@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { LearningMark } from "@/components/LearningMark";
-import { SignOutButton } from "@/components/SignOutButton";
+import { initialsFrom } from "@/lib/initials";
 import type { AppUser } from "@/lib/session";
 
 const links = [
   { href: "/", label: "Notes", track: "nav-notes" },
   { href: "/learn", label: "Lessons", track: "nav-lessons" },
+  { href: "/daily", label: "Daily", track: "nav-daily" },
   { href: "/activity", label: "Activity", track: "nav-activity" },
 ];
 
@@ -27,12 +28,14 @@ export function SiteHeader({ user }: { user: AppUser | null }) {
             </Link>
           ))}
           {user ? (
-            <>
-              <Link href="/activity" data-track="nav-account" className="pill-teal max-w-[12rem] truncate text-sm">
-                {user.email}
-              </Link>
-              <SignOutButton mode={user.mode} />
-            </>
+            <Link
+              href="/profile"
+              data-track="nav-profile"
+              className="initials-mark"
+              aria-label={user.displayName ? `Profile, ${user.displayName}` : "Your profile"}
+            >
+              {initialsFrom(user.displayName, user.email)}
+            </Link>
           ) : (
             <Link href="/login" data-track="nav-sign-in" className="pill-teal text-sm">
               Sign in

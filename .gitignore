@@ -42,6 +42,7 @@ yarn-error.log*
 /data/demo-users.json
 /data/questions.json
 /data/leads.json
+/data/practice.json
 
 # vercel
 .vercel

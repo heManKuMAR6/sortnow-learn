@@ -201,3 +201,56 @@ create policy "events public ig insert"
   );
 
 grant insert on public.events to anon;
+
+-- Daily practice. One saved response per challenge. The trigger stamps the
+-- day from the database clock so a streak is a real run of saved days.
+create table if not exists public.challenge_completions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  challenge_id text not null check (char_length(challenge_id) between 1 and 80),
+  track text not null check (track in ('beginner', 'manager')),
+  response text not null check (char_length(response) between 20 and 800),
+  completed_on date not null,
+  created_at timestamptz not null default now(),
+  unique (user_id, challenge_id)
+);
+
+create unique index if not exists challenge_completions_one_per_track_day
+  on public.challenge_completions (user_id, track, completed_on);
+
+create index if not exists challenge_completions_user_idx
+  on public.challenge_completions (user_id, completed_on desc);
+
+alter table public.challenge_completions enable row level security;
+
+drop policy if exists "challenge completions select own" on public.challenge_completions;
+create policy "challenge completions select own"
+  on public.challenge_completions for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "challenge completions insert own" on public.challenge_completions;
+create policy "challenge completions insert own"
+  on public.challenge_completions for insert
+  with check (auth.uid() = user_id);
+
+grant select, insert on public.challenge_completions to authenticated;
+
+create or replace function public.stamp_challenge_completion()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Sign in required';
+  end if;
+  new.user_id := auth.uid();
+  new.completed_on := (timezone('America/Chicago', now()))::date;
+  return new;
+end;
+$$;
+
+drop trigger if exists challenge_completions_stamp on public.challenge_completions;
+create trigger challenge_completions_stamp
+  before insert on public.challenge_completions
+  for each row execute function public.stamp_challenge_completion();

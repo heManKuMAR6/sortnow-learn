@@ -271,6 +271,38 @@ textarea.field {
   gap: 0.55rem 0.9rem;
 }
 
+.initials-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  border-radius: 999px;
+  background: var(--color-deep-teal);
+  color: #fff;
+  font-family: var(--font-outfit), Outfit, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.initials-mark:hover {
+  filter: brightness(1.08);
+}
+
+.initials-mark:focus-visible {
+  outline: 2px solid var(--color-sunny-yellow);
+  outline-offset: 3px;
+}
+
+.initials-mark-lg {
+  width: 4.5rem;
+  height: 4.5rem;
+  font-size: 1.35rem;
+}
+
 .demo-line {
   display: flex;
   flex-wrap: wrap;
