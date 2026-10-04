@@ -69,7 +69,9 @@ function toRow(patch: ProfilePatch) {
 function fail(error: { message: string; code?: string }): never {
   if (error.code === "23505") throw new StoreError("That handle is taken.", 409);
   if (error.code === "23514") throw new StoreError("One of those values is not allowed.");
-  throw new StoreError(error.message, 500);
+  // Keep the real reason in the server log; visitors get a calm message.
+  console.error("[supabase-store]", error.code ?? "", error.message);
+  throw new StoreError("Something went wrong on our side. Please try again in a bit.", 500);
 }
 
 async function db() {
@@ -137,7 +139,10 @@ export const supabaseStore: Store = {
       upsert: true,
       cacheControl: "3600",
     });
-    if (error) throw new StoreError(error.message, 500);
+    if (error) {
+      console.error("[supabase-store] avatar upload", error.message);
+      throw new StoreError("We could not save that picture. Please try again.", 500);
+    }
     const { data } = supabase.storage.from("avatars").getPublicUrl(path);
     return this.updateProfile(id, { avatarUrl: `${data.publicUrl}?v=${Date.now()}` });
   },

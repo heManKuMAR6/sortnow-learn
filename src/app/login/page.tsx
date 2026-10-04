@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthForm } from "@/components/AuthForm";
 import { AuthShell } from "@/components/AuthShell";
+import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/env";
+import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -18,6 +20,7 @@ export default async function LoginPage({
 }) {
   const { next, error } = await searchParams;
   const target = safeNext(next);
+  if (!error && (await getCurrentUser())) redirect(target);
   return (
     <AuthShell
       title="Welcome back"

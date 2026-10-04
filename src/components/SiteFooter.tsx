@@ -19,6 +19,7 @@ export function SiteFooter({ preview = false }: { preview?: boolean }) {
           <Link href="/challenges" data-track="footer-challenges" className="footer-link">Challenges</Link>
           <Link href="/jobs" data-track="footer-jobs" className="footer-link">Jobs</Link>
           <Link href="/ig" data-track="footer-ig" className="footer-link">Reel drops</Link>
+          <Link href="/newsletter" data-track="footer-newsletter" className="footer-link">Weekly email</Link>
         </nav>
         <div className="grid content-start gap-2 text-sm">
           <p className="eyebrow mb-1">sortNow &amp; Company</p>

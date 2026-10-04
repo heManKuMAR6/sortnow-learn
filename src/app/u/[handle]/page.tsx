@@ -6,11 +6,13 @@ import { Avatar } from "@/components/Avatar";
 import { BadgeGrid } from "@/components/BadgeGrid";
 import { Heatmap } from "@/components/Heatmap";
 import { Reveal } from "@/components/Reveal";
+import { SetupNotice } from "@/components/SetupNotice";
 import { badgesFor } from "@/lib/badges";
 import { challenges } from "@/lib/challenges";
 import { lessons } from "@/lib/content";
 import { formatDay } from "@/lib/format";
 import { liveStreak, utcToday } from "@/lib/platform/dates";
+import { safely } from "@/lib/safe";
 import { getStore } from "@/lib/platform/store";
 import { getCurrentUser } from "@/lib/session";
 
@@ -41,12 +43,18 @@ function Stat({ label, value, hint }: { label: string; value: string | number; h
 export default async function ProfilePage({ params }: { params: Promise<Params> }) {
   const { handle } = await params;
   const store = getStore();
-  const profile = await store.getProfileByHandle(handle);
+  let profile;
+  try {
+    profile = await store.getProfileByHandle(handle);
+  } catch (error) {
+    console.error("[profile page]", error instanceof Error ? error.message : error);
+    return <SetupNotice />;
+  }
   if (!profile) notFound();
 
   const [activity, portfolio, viewer] = await Promise.all([
-    store.activity(profile.id),
-    store.portfolio(profile.id),
+    safely(store.activity(profile.id), {} as Record<string, number>, "profile activity"),
+    safely(store.portfolio(profile.id), [], "profile portfolio"),
     getCurrentUser(),
   ]);
   const isOwner = viewer?.id === profile.id;

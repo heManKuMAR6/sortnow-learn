@@ -5,6 +5,7 @@ import { BadgeGrid } from "@/components/BadgeGrid";
 import { ChallengeCard } from "@/components/ChallengeCard";
 import { Heatmap } from "@/components/Heatmap";
 import { Reveal } from "@/components/Reveal";
+import { SetupNotice } from "@/components/SetupNotice";
 import { Stagger, StaggerItem } from "@/components/Stagger";
 import { StatCard } from "@/components/StatCard";
 import { badgesFor } from "@/lib/badges";
@@ -12,7 +13,9 @@ import { challenges, dailyChallenge } from "@/lib/challenges";
 import { lessons } from "@/lib/content";
 import { getCurrentProfile } from "@/lib/current-profile";
 import { liveStreak, utcToday } from "@/lib/platform/dates";
+import { safely } from "@/lib/safe";
 import { getStore } from "@/lib/platform/store";
+import { nameFromEmail } from "@/lib/platform/handle";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -27,13 +30,13 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/dashboard");
   const profile = await getCurrentProfile(user);
-  if (!profile) redirect("/login?next=/dashboard");
+  if (!profile) return <SetupNotice />;
 
   const store = getStore();
   const [done, activity, portfolio] = await Promise.all([
-    store.completed(user.id),
-    store.activity(user.id),
-    store.portfolio(user.id),
+    safely(store.completed(user.id), { challenges: {}, lessons: [] }, "dashboard completed"),
+    safely(store.activity(user.id), {} as Record<string, number>, "dashboard activity"),
+    safely(store.portfolio(user.id), [], "dashboard portfolio"),
   ]);
 
   const today = utcToday();
@@ -49,6 +52,7 @@ export default async function DashboardPage() {
     portfolioCount: portfolio.length,
     hasBio: profile.bio.trim().length > 0,
   });
+  const needsName = !user.name && profile.displayName === nameFromEmail(user.email);
   const profileIncomplete = !profile.headline || !profile.bio;
 
   return (
@@ -65,6 +69,20 @@ export default async function DashboardPage() {
             : "Show up today and your streak starts. One small step is enough."}
         </p>
       </Reveal>
+
+      {needsName ? (
+        <Reveal className="mt-6">
+          <div className="card flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-2xl">What should we call you?</h2>
+              <p className="text-secondary">Add your full name so your profile shows it, like &ldquo;Alex Morgan&rdquo; instead of part of an email.</p>
+            </div>
+            <Link href="/settings" data-track="dash-add-name" className="pill-teal card-link shrink-0">
+              Add my name
+            </Link>
+          </div>
+        </Reveal>
+      ) : null}
 
       <Stagger className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StaggerItem>
