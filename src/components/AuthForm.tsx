@@ -16,6 +16,14 @@ function GoogleG() {
   );
 }
 
+function GitHubMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+      <path d="M12 .5a11.5 11.5 0 00-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 015.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0012 .5z" />
+    </svg>
+  );
+}
+
 export function AuthForm({
   mode,
   demoMode,
@@ -33,17 +41,17 @@ export function AuthForm({
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  async function google() {
+  async function oauth(provider: "google" | "github") {
     setError(null);
     try {
       const supabase = createClient();
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider,
         options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
       });
       if (oauthError) setError(oauthError.message);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not start Google sign-in.");
+      setError(caught instanceof Error ? caught.message : "Could not start sign-in.");
     }
   }
 
@@ -119,8 +127,11 @@ export function AuthForm({
     <div className="grid gap-4">
       {demoMode ? null : (
         <>
-          <button type="button" className="google-btn" data-track="auth-google" onClick={() => void google()}>
+          <button type="button" className="google-btn" data-track="auth-google" onClick={() => void oauth("google")}>
             <GoogleG /> Continue with Google
+          </button>
+          <button type="button" className="google-btn" data-track="auth-github" onClick={() => void oauth("github")}>
+            <GitHubMark /> Continue with GitHub
           </button>
           <p className="divider-text">
             <span>or with email</span>

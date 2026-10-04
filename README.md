@@ -14,7 +14,7 @@ The app runs with no setup in a labeled preview mode, but accounts there are tem
 2. In the SQL editor, run `supabase/schema.sql` (safe to re-run).
 3. In Vercel, add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Project Settings, API) and redeploy.
 4. Supabase, Authentication, URL Configuration: set Site URL to `https://sortnow-learn.vercel.app` and add `https://sortnow-learn.vercel.app/auth/callback` to Redirect URLs.
-5. Google sign-in (optional): Supabase, Authentication, Providers, Google. Create an OAuth client in Google Cloud Console and paste the client ID and secret. Add Supabase's callback URL to the Google client.
+5. Google and GitHub sign-in (optional): Supabase, Authentication, Providers. For Google create an OAuth client in Google Cloud Console; for GitHub create an OAuth App in GitHub Developer settings. Paste each client ID and secret into Supabase, and add the callback URL Supabase shows (`https://<project-ref>.supabase.co/auth/v1/callback`) to the Google client / GitHub app. Buttons appear only when Supabase is connected.
 6. Email sign-up: leave "Confirm email" on for production. For quick testing you can turn it off.
 
 Where things live:
