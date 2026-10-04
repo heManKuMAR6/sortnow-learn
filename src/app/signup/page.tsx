@@ -9,7 +9,7 @@ export default function SignupPage() {
   const demoMode = !isSupabaseConfigured();
   return (
     <div className="max-w-lg">
-      <h1 className="text-4xl font-semibold">Create an account</h1>
+      <h1 className="text-4xl">Create an account</h1>
       <p className="mt-3 text-secondary">Email and password.</p>
       <div className="glass mt-6 p-6">
         <AuthForm mode="signup" demoMode={demoMode} />

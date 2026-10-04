@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 import { Backdrop } from "@/components/Backdrop";
 import { LeadGate } from "@/components/LeadGate";
 import { PageEnter } from "@/components/PageEnter";
+import { ScrollProgress } from "@/components/ScrollProgress";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Tracker } from "@/components/Tracker";
 import { LEAD_COOKIE } from "@/lib/lead-cookie";
@@ -27,10 +29,18 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   metadataBase: new URL("https://learn.sortnow.co"),
   title: {
-    default: "Sortnow Learn",
-    template: "%s · Sortnow Learn",
+    default: "sortNow Learn",
+    template: "%s · sortNow Learn",
   },
-  description: "Short notes and lessons from sortNow.",
+  description: "Short video lessons, plain-English notes, and a coach you can ask while you watch. From sortNow & Company.",
+  openGraph: {
+    type: "website",
+    siteName: "sortNow Learn",
+    title: "sortNow Learn",
+    description: "Short video lessons, plain-English notes, and a coach you can ask while you watch.",
+    url: "https://learn.sortnow.co",
+  },
+  twitter: { card: "summary" },
 };
 
 export default async function RootLayout({
@@ -45,28 +55,21 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${outfit.variable} ${inter.variable}`}>
       <body className="antialiased">
+        <a href="#main" className="skip-link">
+          Skip to content
+        </a>
         <Backdrop />
+        <ScrollProgress />
         <SiteHeader user={user} />
         {hasLead ? null : <LeadGate />}
         <div className="page-scroll">
           <Tracker signedIn={Boolean(user)} />
           <PageEnter>
-            <main className="mx-auto max-w-6xl px-5 py-10">{children}</main>
-            <footer className="mx-auto max-w-6xl px-5 py-8 text-sm text-secondary">
-              <p>
-                sortNow Learn. The company site is{" "}
-                <a href="https://sortnow.co" data-track="footer-company" className="text-link">
-                  sortnow.co
-                </a>
-                .
-              </p>
-              <p className="mt-1">
-                <a href="mailto:hello@sortnow.co" data-track="footer-email" className="text-link">
-                  hello@sortnow.co
-                </a>
-              </p>
-            </footer>
+            <main id="main" className="container-learn py-10">
+              {children}
+            </main>
           </PageEnter>
+          <SiteFooter />
         </div>
       </body>
     </html>

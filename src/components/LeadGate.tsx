@@ -59,8 +59,8 @@ export function LeadGate() {
           if (event.key === "Escape") event.preventDefault();
         }}
       >
-        <p className="text-sm font-semibold text-teal">This week&apos;s note</p>
-        <h2 id="lead-title" className="mt-1 text-2xl font-semibold">
+        <p className="eyebrow">sortNow Learn</p>
+        <h2 id="lead-title" className="mt-1 text-2xl">
           Join the short list
         </h2>
         <p className="mt-2 text-sm text-secondary">
