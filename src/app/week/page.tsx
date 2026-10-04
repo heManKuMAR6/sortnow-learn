@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LearningMark } from "@/components/LearningMark";
+import { PuzzleMark } from "@/components/PuzzleMark";
 import { weeklyNotesNewestFirst } from "@/lib/content";
 import { igPostsNewestFirst } from "@/lib/ig-posts";
 import { formatDay } from "@/lib/format";
@@ -25,7 +25,7 @@ export default function WeekPage() {
 
   return (
     <article className="week-page">
-      <LearningMark size="hero" />
+      <PuzzleMark size={84} />
       <p className="mt-4 text-sm font-semibold text-teal">Week of {formatDay(latest.weekOf)}</p>
       <h1 className="mt-2 text-4xl leading-tight sm:text-5xl">{latest.title}</h1>
       <p className="mt-4 text-lg text-secondary">{latest.intro}</p>

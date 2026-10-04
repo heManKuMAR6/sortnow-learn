@@ -37,11 +37,8 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# local demo auth and activity (not a database)
-/data/events.json
-/data/demo-users.json
-/data/questions.json
-/data/leads.json
+# local demo auth and activity (not a database). Everything the demo adapter writes.
+/data/
 
 # vercel
 .vercel

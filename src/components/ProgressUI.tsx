@@ -1,6 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { setLessonDone, useCompleted } from "@/lib/progress";
+import { localDay, toast } from "@/lib/toast";
 
 export function DoneBadge({ slug }: { slug: string }) {
   const done = useCompleted().includes(slug);
@@ -38,14 +40,35 @@ export function TrackProgress({ slugs, label }: { slugs: string[]; label: string
   );
 }
 
-export function CompleteButton({ slug }: { slug: string }) {
+export function CompleteButton({ slug, signedIn }: { slug: string; signedIn: boolean }) {
   const done = useCompleted().includes(slug);
+  const router = useRouter();
+
+  async function toggle() {
+    setLessonDone(slug, !done);
+    if (done || !signedIn) return;
+    try {
+      const response = await fetch("/api/progress/lesson", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, day: localDay() }),
+      });
+      const body = (await response.json()) as { gained?: number };
+      if (response.ok && body.gained) {
+        toast({ badge: `+${body.gained}`, title: "Lesson complete", body: "Nice. That is one more piece in place.", icon: "bulb", tone: "points" });
+        router.refresh();
+      }
+    } catch {
+      // The tick is saved on this device either way.
+    }
+  }
+
   return (
     <button
       type="button"
       data-track={`complete-${slug}`}
       aria-pressed={done}
-      onClick={() => setLessonDone(slug, !done)}
+      onClick={() => void toggle()}
       className={done ? "pill-white" : "pill-teal"}
     >
       {done ? "✓ Completed · undo" : "Mark as complete"}

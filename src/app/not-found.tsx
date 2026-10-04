@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { LearningMark } from "@/components/LearningMark";
+import { PuzzleMark } from "@/components/PuzzleMark";
 
 export default function NotFound() {
   return (
     <div className="mx-auto max-w-lg py-10 text-center">
       <div className="flex justify-center">
-        <LearningMark size="hero" />
+        <PuzzleMark size={84} />
       </div>
       <h1 className="mt-4 text-5xl">
         Still looking<span className="dot">.</span>

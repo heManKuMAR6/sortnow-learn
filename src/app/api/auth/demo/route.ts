@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { DEMO_COOKIE, demoCookieOptions } from "@/lib/demo-session";
 import { signInDemo, signUpDemo } from "@/lib/demo-users";
 import { isSupabaseConfigured } from "@/lib/env";
+import { getStore } from "@/lib/platform/store";
 
 function validEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 200;
@@ -29,11 +30,15 @@ export async function POST(request: Request) {
   const intent = row.intent;
   const email = typeof row.email === "string" ? row.email.trim().toLowerCase() : "";
   const password = typeof row.password === "string" ? row.password : "";
+  const name = typeof row.name === "string" ? row.name.trim().slice(0, 80) : "";
   if (intent !== "signup" && intent !== "signin") {
     return NextResponse.json({ error: "intent must be signup or signin." }, { status: 400 });
   }
   if (!validEmail(email)) {
     return NextResponse.json({ error: "Enter a valid email." }, { status: 400 });
+  }
+  if (intent === "signup" && name.length < 1) {
+    return NextResponse.json({ error: "Tell us your name. It is what other people see." }, { status: 400 });
   }
   if (password.length < 6 || password.length > 200) {
     return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 400 });
@@ -41,8 +46,13 @@ export async function POST(request: Request) {
 
   try {
     const user = intent === "signup" ? await signUpDemo(email, password) : await signInDemo(email, password);
+    if (intent === "signup") await getStore().ensureProfile(user.id, name);
     const jar = await cookies();
-    jar.set(DEMO_COOKIE, JSON.stringify({ id: user.id, email: user.email }), demoCookieOptions());
+    jar.set(
+      DEMO_COOKIE,
+      JSON.stringify({ id: user.id, email: user.email, name: name || undefined }),
+      demoCookieOptions(),
+    );
     return NextResponse.json({
       user: { id: user.id, email: user.email },
       mode: "demo",

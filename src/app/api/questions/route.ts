@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getLessonBySlug } from "@/lib/content";
 import { addLessonQuestion } from "@/lib/questions-store";
+import { getCurrentProfile } from "@/lib/current-profile";
 import { getCurrentUser } from "@/lib/session";
 
 export async function POST(request: Request) {
@@ -27,15 +28,17 @@ export async function POST(request: Request) {
   if (question.length < 2 || question.length > 400) {
     return NextResponse.json({ error: "Question must be between 2 and 400 characters." }, { status: 400 });
   }
-  if (!user.email) {
-    return NextResponse.json({ error: "This session has no email to show as the author." }, { status: 400 });
+  // Public thread: show the person's display name, never their email.
+  const profile = await getCurrentProfile(user);
+  if (!profile) {
+    return NextResponse.json({ error: "Could not load your profile. Try again." }, { status: 500 });
   }
 
   try {
     const saved = await addLessonQuestion({
       lessonSlug,
       userId: user.id,
-      author: user.email,
+      author: profile.displayName,
       question,
     });
     return NextResponse.json({ question: saved });

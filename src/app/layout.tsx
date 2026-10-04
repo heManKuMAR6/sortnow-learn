@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
-import { cookies } from "next/headers";
 import { Backdrop } from "@/components/Backdrop";
-import { LeadGate } from "@/components/LeadGate";
+import { DailyCheckIn } from "@/components/DailyCheckIn";
+import { NewsletterPrompt } from "@/components/NewsletterPrompt";
+import { ToastHost } from "@/components/ToastHost";
 import { PageEnter } from "@/components/PageEnter";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Tracker } from "@/components/Tracker";
-import { LEAD_COOKIE } from "@/lib/lead-cookie";
+import { getCurrentProfile } from "@/lib/current-profile";
+import { isSupabaseConfigured } from "@/lib/env";
+import { liveStreak, utcToday } from "@/lib/platform/dates";
 import { getCurrentUser } from "@/lib/session";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -50,8 +53,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getCurrentUser();
-  const jar = await cookies();
-  const hasLead = jar.get(LEAD_COOKIE)?.value === "1";
+  const profile = await getCurrentProfile(user);
 
   return (
     <html lang="en" className={`${outfit.variable} ${inter.variable}`}>
@@ -61,8 +63,23 @@ export default async function RootLayout({
         </a>
         <Backdrop />
         <ScrollProgress />
-        <SiteHeader user={user} />
-        {hasLead ? null : <LeadGate />}
+        <SiteHeader
+          profile={
+            profile && user
+              ? {
+                  displayName: profile.displayName,
+                  handle: profile.handle,
+                  avatarUrl: profile.avatarUrl,
+                  mode: user.mode,
+                  points: profile.points,
+                  streak: liveStreak(profile, utcToday()),
+                }
+              : null
+          }
+        />
+        <ToastHost />
+        {user ? <DailyCheckIn userId={user.id} /> : null}
+        <NewsletterPrompt signedIn={Boolean(user)} />
         <div className="page-scroll">
           <Tracker signedIn={Boolean(user)} />
           <PageEnter>
@@ -70,7 +87,7 @@ export default async function RootLayout({
               {children}
             </main>
           </PageEnter>
-          <SiteFooter />
+          <SiteFooter preview={!isSupabaseConfigured()} />
         </div>
       </body>
     </html>
