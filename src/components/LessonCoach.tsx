@@ -87,7 +87,7 @@ export function LessonCoach({
   return (
     <div className="mt-8 grid gap-5">
       <section className="glass p-5 sm:p-6" aria-labelledby="coach-title">
-        <h2 id="coach-title" className="text-2xl font-semibold">
+        <h2 id="coach-title" className="text-2xl">
           Ask while you watch
         </h2>
         <p className="mt-2 max-w-xl text-sm text-secondary">
@@ -147,7 +147,7 @@ export function LessonCoach({
       </section>
 
       <section className="glass p-5 sm:p-6" aria-labelledby="thread-title">
-        <h2 id="thread-title" className="text-2xl font-semibold">
+        <h2 id="thread-title" className="text-2xl">
           Questions on this lesson
         </h2>
         <p className="mt-2 text-sm text-secondary">Anyone can read. Posting needs a session.</p>

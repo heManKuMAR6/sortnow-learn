@@ -86,20 +86,18 @@ export function IgLanding({ post }: { post: IgPost }) {
 
   useEffect(() => {
     postEvent(pathname, "view", null);
-    const root = document.querySelector(".page-scroll");
-    if (!(root instanceof HTMLElement)) return;
-
     const measure = () => {
-      const room = root.scrollHeight - root.clientHeight;
-      const depth = room <= 0 ? 100 : Math.min(100, Math.round((root.scrollTop / room) * 100));
+      const el = document.documentElement;
+      const room = el.scrollHeight - el.clientHeight;
+      const depth = room <= 0 ? 100 : Math.min(100, Math.round((el.scrollTop / room) * 100));
       for (const mark of marks) {
         if (depth >= mark) postEvent(pathname, "scroll", mark);
       }
     };
 
     measure();
-    root.addEventListener("scroll", measure, { passive: true });
-    return () => root.removeEventListener("scroll", measure);
+    window.addEventListener("scroll", measure, { passive: true });
+    return () => window.removeEventListener("scroll", measure);
   }, [pathname]);
 
   return (
@@ -108,7 +106,7 @@ export function IgLanding({ post }: { post: IgPost }) {
       <div className="ig-read">
         <Reveal>
           <p className="text-sm font-semibold text-teal">{post.dateLabel}</p>
-          <h1 className="mt-3 text-4xl font-semibold leading-[1.08] sm:text-5xl">{post.title}</h1>
+          <h1 className="mt-3 text-4xl leading-[1.08] sm:text-5xl">{post.title}</h1>
           <p className="mt-5 max-w-xl text-lg">{post.explanation}</p>
           <p className="mt-3 max-w-xl text-secondary">{post.howItHelps}</p>
           <div className="mt-8">
@@ -118,7 +116,7 @@ export function IgLanding({ post }: { post: IgPost }) {
         </Reveal>
 
         <Reveal className="mt-14" delay={0.05}>
-          <h2 className="text-2xl font-semibold">Try this prompt</h2>
+          <h2 className="text-2xl">Try this prompt</h2>
           <pre className="prompt-block">{post.prompt}</pre>
           <div className="mt-4">
             <CopyPrompt text={post.prompt} />
@@ -126,7 +124,7 @@ export function IgLanding({ post }: { post: IgPost }) {
         </Reveal>
 
         <Reveal className="mt-14" delay={0.05}>
-          <h2 className="text-2xl font-semibold">Notes</h2>
+          <h2 className="text-2xl">Notes</h2>
           <ul className="mt-4 grid max-w-xl gap-3">
             {post.notes.map((note) => (
               <li key={note} className="flex gap-3">
@@ -138,7 +136,7 @@ export function IgLanding({ post }: { post: IgPost }) {
         </Reveal>
 
         <Reveal className="mt-14" delay={0.05}>
-          <h2 className="text-2xl font-semibold">Keep going</h2>
+          <h2 className="text-2xl">Keep going</h2>
           <ul className="mt-4 grid gap-2">
             {post.links.map((link) => (
               <li key={link.href}>

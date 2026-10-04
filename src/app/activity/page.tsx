@@ -22,7 +22,7 @@ export default async function ActivityPage() {
   if (!user) {
     return (
       <div>
-        <h1 className="text-4xl font-semibold">Activity</h1>
+        <h1 className="text-4xl">Activity</h1>
         <p className="mt-4 max-w-xl">Sign in to see your recent visits.</p>
         <p className="mt-4">
           <Link href="/login" data-track="activity-sign-in" className="pill-teal text-sm">
@@ -80,7 +80,7 @@ export default async function ActivityPage() {
 
   return (
     <div>
-      <h1 className="text-4xl font-semibold">Activity</h1>
+      <h1 className="text-4xl">Activity</h1>
       <p className="mt-3 max-w-xl text-secondary">Recent visits on this account.</p>
       <p className="mt-1 text-sm text-muted">{user.email}</p>
       {readError ? (

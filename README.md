@@ -2,6 +2,15 @@
 
 Short notes and two lesson tracks (Beginner and Manager) from Sortnow. This is not the company homepage. sortnow.co stays the consulting site for sortNow & Company (software, ML, and cloud engineering). This app is meant to be served at learn.sortnow.co.
 
+## Pages
+
+- `/` landing page: hero, how it works, tracks, this week, latest notes.
+- `/learn` and `/learn/[track]/[slug]` lessons, with per-device progress (`localStorage`, key `sortnow_learn_progress`), previous/next, and the lesson coach.
+- `/notes` and `/posts/[slug]` short notes. `/week` the weekly note. `/ig` the reel pages.
+- `sitemap.xml` and `robots.txt` are generated from `src/lib/content.ts` and `src/lib/ig-posts.ts`.
+
+The look follows the company site (sortnow.co): same palette, light teal Outfit headings, glass cards that lift on hover, staggered reveals. The page scrolls with the browser, not an inner container.
+
 ## Run locally
 
 ```bash

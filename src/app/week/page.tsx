@@ -17,7 +17,7 @@ export default function WeekPage() {
   if (!latest) {
     return (
       <div>
-        <h1 className="text-4xl font-semibold">This week</h1>
+        <h1 className="text-4xl">This week</h1>
         <p className="mt-3 text-secondary">No note yet.</p>
       </div>
     );
@@ -27,12 +27,12 @@ export default function WeekPage() {
     <article className="week-page">
       <LearningMark size="hero" />
       <p className="mt-4 text-sm font-semibold text-teal">Week of {formatDay(latest.weekOf)}</p>
-      <h1 className="mt-2 text-4xl font-semibold leading-tight sm:text-5xl">{latest.title}</h1>
+      <h1 className="mt-2 text-4xl leading-tight sm:text-5xl">{latest.title}</h1>
       <p className="mt-4 text-lg text-secondary">{latest.intro}</p>
 
       <section className="glass mt-6 p-5">
         <span className="chip chip-mint">Beginners</span>
-        <h2 className="mt-3 text-2xl font-semibold">{latest.beginnerTitle}</h2>
+        <h2 className="mt-3 text-2xl">{latest.beginnerTitle}</h2>
         {latest.beginner.map((paragraph) => (
           <p key={paragraph} className="mt-3">
             {paragraph}
@@ -47,7 +47,7 @@ export default function WeekPage() {
 
       <section className="glass mt-4 p-5">
         <span className="chip chip-coral">Managers</span>
-        <h2 className="mt-3 text-2xl font-semibold">{latest.managerTitle}</h2>
+        <h2 className="mt-3 text-2xl">{latest.managerTitle}</h2>
         {latest.manager.map((paragraph) => (
           <p key={paragraph} className="mt-3">
             {paragraph}
