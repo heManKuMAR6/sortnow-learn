@@ -8,7 +8,7 @@ import { AiIcon } from "@/components/AiIcon";
 const KEY = "sn_newsletter";
 const DELAY_MS = 45_000;
 const SNOOZE_DAYS = 14;
-const QUIET = ["/login", "/signup", "/settings"];
+const QUIET = ["/login", "/signup", "/settings", "/newsletter", "/status"];
 
 type Saved = { state: "subscribed" | "dismissed"; at: number };
 
@@ -70,7 +70,7 @@ export function NewsletterPrompt({ signedIn }: { signedIn: boolean }) {
       }
       save("subscribed");
       setDone(true);
-      window.setTimeout(() => setOpen(false), 2600);
+      window.setTimeout(() => setOpen(false), 6000);
     } catch {
       setError("The line hiccuped. Try once more.");
     } finally {
@@ -109,6 +109,7 @@ export function NewsletterPrompt({ signedIn }: { signedIn: boolean }) {
                   You&apos;re in<span className="dot">.</span>
                 </h2>
                 <p className="mt-2 text-secondary">See you next week with something worth knowing.</p>
+                <p className="mt-3 text-sm"><a href="/newsletter" className="text-link">See a sample issue →</a></p>
               </>
             ) : (
               <>

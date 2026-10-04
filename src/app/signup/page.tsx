@@ -2,13 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthForm } from "@/components/AuthForm";
 import { AuthShell } from "@/components/AuthShell";
+import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/env";
+import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Create your account" };
 
 export default async function SignupPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;
   const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+  if (await getCurrentUser()) redirect(target);
   return (
     <AuthShell
       title="Join sortNow Learn"

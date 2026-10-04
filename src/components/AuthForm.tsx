@@ -24,6 +24,26 @@ function GitHubMark() {
   );
 }
 
+// Show a social button only when it has been switched on in Supabase AND listed here,
+// so nobody clicks a button that cannot work. Example: NEXT_PUBLIC_AUTH_PROVIDERS=google,github
+const PROVIDERS = (process.env.NEXT_PUBLIC_AUTH_PROVIDERS ?? "")
+  .split(",")
+  .map((p) => p.trim().toLowerCase())
+  .filter(Boolean);
+
+/** Turn raw auth errors into something a person can act on. */
+function friendly(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("provider is not enabled") || m.includes("unsupported provider"))
+    return "That sign-in option is not switched on yet. Please use email for now.";
+  if (m.includes("rate limit")) return "Too many emails were sent just now. Wait a few minutes and try again.";
+  if (m.includes("not confirmed")) return "Please confirm your email first. Check your inbox for the link.";
+  if (m.includes("invalid login")) return "That email and password do not match.";
+  if (m.includes("already registered")) return "That email already has an account. Try signing in.";
+  if (m.includes("password should be")) return "Choose a password with at least 6 characters.";
+  return message;
+}
+
 export function AuthForm({
   mode,
   demoMode,
@@ -49,9 +69,9 @@ export function AuthForm({
         provider,
         options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
       });
-      if (oauthError) setError(oauthError.message);
+      if (oauthError) setError(friendly(oauthError.message));
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not start sign-in.");
+      setError(caught instanceof Error ? friendly(caught.message) : "Could not start sign-in.");
     }
   }
 
@@ -100,7 +120,7 @@ export function AuthForm({
           },
         });
         if (signUpError) {
-          setError(signUpError.message);
+          setError(friendly(signUpError.message));
           return;
         }
         if (!data.session) {
@@ -110,14 +130,14 @@ export function AuthForm({
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) {
-          setError(signInError.message);
+          setError(friendly(signInError.message));
           return;
         }
       }
       router.push(next);
       router.refresh();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Something went wrong.");
+      setError(caught instanceof Error ? friendly(caught.message) : "Something went wrong.");
     } finally {
       setPending(false);
     }
@@ -125,14 +145,18 @@ export function AuthForm({
 
   return (
     <div className="grid gap-4">
-      {demoMode ? null : (
+      {demoMode || PROVIDERS.length === 0 ? null : (
         <>
-          <button type="button" className="google-btn" data-track="auth-google" onClick={() => void oauth("google")}>
-            <GoogleG /> Continue with Google
-          </button>
-          <button type="button" className="google-btn" data-track="auth-github" onClick={() => void oauth("github")}>
-            <GitHubMark /> Continue with GitHub
-          </button>
+          {PROVIDERS.includes("google") ? (
+            <button type="button" className="google-btn" data-track="auth-google" onClick={() => void oauth("google")}>
+              <GoogleG /> Continue with Google
+            </button>
+          ) : null}
+          {PROVIDERS.includes("github") ? (
+            <button type="button" className="google-btn" data-track="auth-github" onClick={() => void oauth("github")}>
+              <GitHubMark /> Continue with GitHub
+            </button>
+          ) : null}
           <p className="divider-text">
             <span>or with email</span>
           </p>
@@ -147,7 +171,7 @@ export function AuthForm({
               autoComplete="name"
               required
               maxLength={80}
-              placeholder="Hemanth Kumar"
+              placeholder="Your full name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="field"

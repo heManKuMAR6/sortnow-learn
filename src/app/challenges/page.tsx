@@ -5,6 +5,7 @@ import { Reveal } from "@/components/Reveal";
 import { Stagger, StaggerItem } from "@/components/Stagger";
 import { challenges, dailyChallenge } from "@/lib/challenges";
 import { utcToday } from "@/lib/platform/dates";
+import { safely } from "@/lib/safe";
 import { getStore } from "@/lib/platform/store";
 import { getCurrentUser } from "@/lib/session";
 
@@ -15,7 +16,9 @@ export const metadata: Metadata = {
 
 export default async function ChallengesPage() {
   const user = await getCurrentUser();
-  const done = user ? (await getStore().completed(user.id)).challenges : {};
+  const done = user
+    ? (await safely(getStore().completed(user.id), { challenges: {}, lessons: [] }, "challenges completed")).challenges
+    : {};
   const featured = dailyChallenge(utcToday());
   const solved = challenges.filter((c) => done[c.slug]).length;
 

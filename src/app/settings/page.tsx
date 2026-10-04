@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SettingsForm } from "@/components/SettingsForm";
+import { SetupNotice } from "@/components/SetupNotice";
 import { getCurrentProfile } from "@/lib/current-profile";
+import { safely } from "@/lib/safe";
 import { getStore } from "@/lib/platform/store";
 import { getCurrentUser } from "@/lib/session";
 
@@ -12,8 +14,8 @@ export default async function SettingsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/settings");
   const profile = await getCurrentProfile(user);
-  if (!profile) redirect("/login?next=/settings");
-  const portfolio = await getStore().portfolio(user.id);
+  if (!profile) return <SetupNotice />;
+  const portfolio = await safely(getStore().portfolio(user.id), [], "settings portfolio");
 
   return (
     <div className="mx-auto max-w-3xl">

@@ -8,6 +8,7 @@ import { Stagger, StaggerItem } from "@/components/Stagger";
 import { challenges, dailyChallenge } from "@/lib/challenges";
 import { lessonsFor, lessons, tracks, weeklyNotesNewestFirst } from "@/lib/content";
 import { utcToday } from "@/lib/platform/dates";
+import { safely } from "@/lib/safe";
 import { getStore } from "@/lib/platform/store";
 import { getCurrentUser } from "@/lib/session";
 
@@ -25,7 +26,9 @@ export default async function HomePage() {
   const user = await getCurrentUser();
   const today = utcToday();
   const featured = dailyChallenge(today);
-  const done = user ? (await getStore().completed(user.id)).challenges : {};
+  const done = user
+    ? (await safely(getStore().completed(user.id), { challenges: {}, lessons: [] }, "home completed")).challenges
+    : {};
   const week = weeklyNotesNewestFirst()[0];
 
   return (

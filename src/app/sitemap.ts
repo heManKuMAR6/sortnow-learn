@@ -6,7 +6,7 @@ import { SITE_URL } from "@/lib/site";
 const base = SITE_URL;
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const fixed = ["", "/learn", "/notes", "/week", "/ig"].map((path) => ({ url: `${base}${path}` }));
+  const fixed = ["", "/learn", "/challenges", "/jobs", "/notes", "/week", "/ig", "/newsletter"].map((path) => ({ url: `${base}${path}` }));
   return [
     ...fixed,
     ...lessons.map((l) => ({ url: `${base}/learn/${l.track}/${l.slug}` })),

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AiIcon } from "@/components/AiIcon";
 import { Brand } from "@/components/PuzzleMark";
+import { SignOutButton } from "@/components/SignOutButton";
 import { UserMenu, type MenuProfile } from "@/components/UserMenu";
 
 const links = [
@@ -21,7 +22,8 @@ function isActive(pathname: string, href: string) {
 
 export type HeaderProfile = MenuProfile & { points: number; streak: number };
 
-export function SiteHeader({ profile }: { profile: HeaderProfile | null }) {
+/** `limbo` is set when someone is signed in but their profile could not load. */
+export function SiteHeader({ profile, limbo }: { profile: HeaderProfile | null; limbo?: "supabase" | "demo" }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -69,6 +71,8 @@ export function SiteHeader({ profile }: { profile: HeaderProfile | null }) {
               </Link>
               <UserMenu profile={profile} />
             </>
+          ) : limbo ? (
+            <SignOutButton mode={limbo} />
           ) : (
             <>
               <Link href="/login" data-track="nav-sign-in" className="nav-link hidden sm:inline-block">

@@ -10,7 +10,8 @@ export const getCurrentProfile = cache(async (user?: AppUser | null): Promise<Pr
   if (!who) return null;
   try {
     return await getStore().ensureProfile(who.id, who.name ?? nameFromEmail(who.email));
-  } catch {
+  } catch (error) {
+    console.error("[current-profile]", error instanceof Error ? error.message : error);
     return null;
   }
 });

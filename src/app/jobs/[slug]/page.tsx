@@ -5,6 +5,7 @@ import { JobApply } from "@/components/JobApply";
 import { Reveal } from "@/components/Reveal";
 import { formatDay } from "@/lib/format";
 import { getJob, jobs } from "@/lib/jobs";
+import { safely } from "@/lib/safe";
 import { getStore } from "@/lib/platform/store";
 import { getCurrentUser } from "@/lib/session";
 
@@ -25,7 +26,7 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
   const job = getJob(slug);
   if (!job) notFound();
   const user = await getCurrentUser();
-  const applied = user ? (await getStore().appliedJobs(user.id)).includes(slug) : false;
+  const applied = user ? (await safely(getStore().appliedJobs(user.id), [] as string[], "applied jobs")).includes(slug) : false;
 
   return (
     <article className="mx-auto max-w-3xl">

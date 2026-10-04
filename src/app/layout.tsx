@@ -64,6 +64,7 @@ export default async function RootLayout({
         <Backdrop />
         <ScrollProgress />
         <SiteHeader
+          limbo={user && !profile ? user.mode : undefined}
           profile={
             profile && user
               ? {

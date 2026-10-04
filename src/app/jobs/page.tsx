@@ -4,6 +4,7 @@ import { JobCard } from "@/components/JobCard";
 import { Reveal } from "@/components/Reveal";
 import { Stagger, StaggerItem } from "@/components/Stagger";
 import { jobsNewestFirst } from "@/lib/jobs";
+import { safely } from "@/lib/safe";
 import { getStore } from "@/lib/platform/store";
 import { getCurrentUser } from "@/lib/session";
 
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 export default async function JobsPage() {
   const jobs = jobsNewestFirst();
   const user = await getCurrentUser();
-  const applied = user ? await getStore().appliedJobs(user.id) : [];
+  const applied = user ? await safely(getStore().appliedJobs(user.id), [] as string[], "applied jobs") : [];
 
   return (
     <div>
