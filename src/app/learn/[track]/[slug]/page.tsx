@@ -90,8 +90,8 @@ export default async function LessonPage({ params }: { params: Promise<Params> }
             ))}
           </Stagger>
           <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-black/5 pt-5">
-            <CompleteButton slug={lesson.slug} />
-            <span className="text-sm text-secondary">Saved on this device.</span>
+            <CompleteButton slug={lesson.slug} signedIn={Boolean(user)} />
+            <span className="text-sm text-secondary">{user ? "Earns 5 points the first time." : "Sign in to earn points for it."}</span>
           </div>
         </section>
       </Reveal>

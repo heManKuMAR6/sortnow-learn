@@ -82,7 +82,6 @@ export default async function ActivityPage() {
     <div>
       <h1 className="text-4xl">Activity</h1>
       <p className="mt-3 max-w-xl text-secondary">Recent visits on this account.</p>
-      <p className="mt-1 text-sm text-muted">{user.email}</p>
       {readError ? (
         <p className="mt-4 max-w-xl text-sm text-coral">Could not load activity just now.</p>
       ) : null}

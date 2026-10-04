@@ -1,6 +1,14 @@
 // Add a week by appending an object. Leave older entries in place.
 // ManyChat for that reel should link to /ig/<slug>.
 // Drop the still at public/ig/<slug>.png when you have it.
+//
+// Attachments and documents: put the file in public/ig/files/<slug>/ and list it
+// under `resources` with href "/ig/files/<slug>/name.pdf" (or any web link).
+// The page itself is gated server-side: nothing below is sent to a visitor until
+// they leave their name and email. A file's direct URL is not protected, so use
+// an unlisted link for anything that must stay private.
+export type IgResource = { label: string; href: string; kind: "pdf" | "doc" | "sheet" | "link" };
+
 export type IgPost = {
   slug: string;
   weekOf: string;
@@ -12,6 +20,7 @@ export type IgPost = {
   sample: string;
   notes: string[];
   links: { href: string; label: string }[];
+  resources?: IgResource[];
   nextLine: string;
 };
 
@@ -44,7 +53,7 @@ export const igPosts: IgPost[] = [
     ],
     links: [
       { href: "/learn", label: "Beginner track" },
-      { href: "/", label: "Home notes" },
+      { href: "/notes", label: "More notes" },
     ],
     nextLine: "Next week gets its own page. This one stays.",
   },

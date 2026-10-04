@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 import { lessons, posts } from "@/lib/content";
 import { igPosts } from "@/lib/ig-posts";
+import { SITE_URL } from "@/lib/site";
 
-const base = "https://learn.sortnow.co";
+const base = SITE_URL;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const fixed = ["", "/learn", "/notes", "/week", "/ig"].map((path) => ({ url: `${base}${path}` }));

@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { IgLanding } from "@/components/IgLanding";
+import { LockedDrop } from "@/components/LockedDrop";
 import { getIgPost, igPosts } from "@/lib/ig-posts";
+import { LEAD_COOKIE } from "@/lib/lead-cookie";
 
 type Params = { slug: string };
 
@@ -16,7 +19,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const post = getIgPost(slug);
-  if (!post) return { title: "This week" };
+  if (!post) return { title: "Reel drop" };
   return { title: post.title, description: post.explanation };
 }
 
@@ -24,5 +27,6 @@ export default async function IgPostPage({ params }: { params: Promise<Params> }
   const { slug } = await params;
   const post = getIgPost(slug);
   if (!post) notFound();
-  return <IgLanding post={post} />;
+  const unlocked = (await cookies()).get(LEAD_COOKIE)?.value === "1";
+  return unlocked ? <IgLanding post={post} /> : <LockedDrop post={post} />;
 }

@@ -1,25 +1,28 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthForm } from "@/components/AuthForm";
+import { AuthShell } from "@/components/AuthShell";
 import { isSupabaseConfigured } from "@/lib/env";
 
-export const metadata: Metadata = { title: "Create account" };
+export const metadata: Metadata = { title: "Create your account" };
 
-export default function SignupPage() {
-  const demoMode = !isSupabaseConfigured();
+export default async function SignupPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const { next } = await searchParams;
+  const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
   return (
-    <div className="max-w-lg">
-      <h1 className="text-4xl">Create an account</h1>
-      <p className="mt-3 text-secondary">Email and password.</p>
-      <div className="glass mt-6 p-6">
-        <AuthForm mode="signup" demoMode={demoMode} />
-      </div>
-      <p className="mt-6 text-sm">
-        Already have an account?{" "}
-        <Link href="/login" data-track="go-sign-in" className="text-link">
-          Sign in
-        </Link>
-      </p>
-    </div>
+    <AuthShell
+      title="Join sortNow Learn"
+      subtitle="Free. Learn AI in small steps and keep a streak."
+      footer={
+        <>
+          Already have an account?{" "}
+          <Link href={`/login?next=${encodeURIComponent(target)}`} data-track="go-sign-in" className="text-link">
+            Sign in
+          </Link>
+        </>
+      }
+    >
+      <AuthForm mode="signup" demoMode={!isSupabaseConfigured()} next={target} />
+    </AuthShell>
   );
 }

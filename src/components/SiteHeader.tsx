@@ -3,25 +3,25 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LearningMark } from "@/components/LearningMark";
-import { SignOutButton } from "@/components/SignOutButton";
-import type { AppUser } from "@/lib/session";
+import { AiIcon } from "@/components/AiIcon";
+import { Brand } from "@/components/PuzzleMark";
+import { UserMenu, type MenuProfile } from "@/components/UserMenu";
 
 const links = [
-  { href: "/", label: "Home", track: "nav-home" },
   { href: "/learn", label: "Lessons", track: "nav-lessons" },
+  { href: "/challenges", label: "Challenges", track: "nav-challenges" },
+  { href: "/jobs", label: "Jobs", track: "nav-jobs" },
   { href: "/notes", label: "Notes", track: "nav-notes" },
-  { href: "/week", label: "This week", track: "nav-week" },
-  { href: "/activity", label: "Activity", track: "nav-activity" },
 ];
 
 function isActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
-  if (href === "/notes") return pathname === "/notes" || pathname.startsWith("/posts");
+  if (href === "/notes") return pathname === "/notes" || pathname.startsWith("/posts") || pathname.startsWith("/week");
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function SiteHeader({ user }: { user: AppUser | null }) {
+export type HeaderProfile = MenuProfile & { points: number; streak: number };
+
+export function SiteHeader({ profile }: { profile: HeaderProfile | null }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -40,23 +40,9 @@ export function SiteHeader({ user }: { user: AppUser | null }) {
   return (
     <header className={`site-header${scrolled ? " scrolled" : ""}`}>
       <div className="header-bar">
-        <div className="brand-cluster">
-          <Link href="/" data-track="brand" className="wordmark-btn" aria-label="sortNow Learn home">
-            sortNow
-          </Link>
-          <LearningMark />
-          <span className="learn-label">Learn</span>
-        </div>
-        <button
-          type="button"
-          className="menu-btn"
-          aria-label={menu ? "Close menu" : "Open menu"}
-          aria-expanded={menu}
-          aria-controls="primary-nav"
-          onClick={() => setMenu((open) => !open)}
-        >
-          {menu ? "✕" : "☰"}
-        </button>
+        <Link href="/" data-track="brand" className="brand-link" aria-label="sortNow Learn home">
+          <Brand />
+        </Link>
         <nav id="primary-nav" aria-label="Primary" className={`header-nav${menu ? " open" : ""}`}>
           {links.map((link) => (
             <Link
@@ -69,19 +55,41 @@ export function SiteHeader({ user }: { user: AppUser | null }) {
               {link.label}
             </Link>
           ))}
-          {user ? (
+        </nav>
+        <div className="header-end">
+          {profile ? (
             <>
-              <Link href="/activity" data-track="nav-account" className="pill-teal max-w-[12rem] truncate text-sm">
-                {user.email}
+              <Link href="/dashboard" className="stat-chip" data-track="nav-stats" title="Your streak and points">
+                <span className="stat-chip-item streak">
+                  <AiIcon name="flame" size={16} /> {profile.streak}
+                </span>
+                <span className="stat-chip-item">
+                  <AiIcon name="spark" size={16} /> {profile.points}
+                </span>
               </Link>
-              <SignOutButton mode={user.mode} />
+              <UserMenu profile={profile} />
             </>
           ) : (
-            <Link href="/login" data-track="nav-sign-in" className="pill-teal text-sm">
-              Sign in
-            </Link>
+            <>
+              <Link href="/login" data-track="nav-sign-in" className="nav-link hidden sm:inline-block">
+                Sign in
+              </Link>
+              <Link href="/signup" data-track="nav-join" className="pill-teal text-sm">
+                Join free
+              </Link>
+            </>
           )}
-        </nav>
+          <button
+            type="button"
+            className="menu-btn"
+            aria-label={menu ? "Close menu" : "Open menu"}
+            aria-expanded={menu}
+            aria-controls="primary-nav"
+            onClick={() => setMenu((open) => !open)}
+          >
+            {menu ? "✕" : "☰"}
+          </button>
+        </div>
       </div>
     </header>
   );

@@ -23,6 +23,14 @@ export default function NotesPage() {
           A few notes on the words, the measurements, and the questions that show up when people put models into
           real work.
         </p>
+        <p className="mt-5 flex flex-wrap gap-3 text-sm">
+          <Link href="/week" data-track="notes-week" className="pill-white">
+            This week&apos;s note
+          </Link>
+          <Link href="/ig" data-track="notes-drops" className="pill-white">
+            Reel drops
+          </Link>
+        </p>
       </Reveal>
       <Stagger className="mt-10 grid gap-5 md:grid-cols-2">
         {posts.map((post) => (

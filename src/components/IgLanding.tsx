@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LearningMark } from "@/components/LearningMark";
+import { PuzzleMark } from "@/components/PuzzleMark";
 import { Reveal } from "@/components/Reveal";
 import type { IgPost } from "@/lib/ig-posts";
 
@@ -33,7 +33,7 @@ function ReelStill({ slug, title }: { slug: string; title: string }) {
   if (missing) {
     return (
       <div className="reel-still">
-        <LearningMark size="hero" />
+        <PuzzleMark size={84} />
         <p className="font-heading text-2xl font-semibold leading-tight">{title}</p>
         <p className="text-secondary">The reel still goes here</p>
       </div>
@@ -122,6 +122,28 @@ export function IgLanding({ post }: { post: IgPost }) {
             <CopyPrompt text={post.prompt} />
           </div>
         </Reveal>
+
+        {post.resources?.length ? (
+          <Reveal className="mt-14" delay={0.05}>
+            <h2 className="text-2xl">Downloads and links</h2>
+            <ul className="mt-4 grid max-w-xl gap-3">
+              {post.resources.map((r) => (
+                <li key={r.href}>
+                  <a
+                    href={r.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-track={`ig-resource-${r.kind}`}
+                    className="card flex items-center justify-between gap-3 p-4"
+                  >
+                    <span className="font-medium text-ink">{r.label}</span>
+                    <span className="chip chip-mint uppercase">{r.kind}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        ) : null}
 
         <Reveal className="mt-14" delay={0.05}>
           <h2 className="text-2xl">Notes</h2>
