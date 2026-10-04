@@ -37,7 +37,7 @@ When you have a Supabase project, run `supabase/schema.sql` in the SQL editor. T
 
 Free-tier path: a Vercel Hobby project, Supabase free tier (Auth and the tables in `supabase/schema.sql`), and YouTube embeds. No video files are stored in this repo.
 
-Point a CNAME for `learn.sortnow.co` at the Vercel project. Do not overwrite the apex `sortnow.co` site. That domain already serves the live consulting site. Attaching this app to the apex would replace it. This is not a new domain purchase.
+The live address is https://sortnow-learn.vercel.app (set `NEXT_PUBLIC_SITE_URL` if you attach a custom domain). To use `learn.sortnow.co`, point a CNAME at the Vercel project. Do not overwrite the apex `sortnow.co` site. That domain already serves the live consulting site. Attaching this app to the apex would replace it. This is not a new domain purchase.
 
 ## When AWS is actually worth it
 

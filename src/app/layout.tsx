@@ -10,6 +10,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { Tracker } from "@/components/Tracker";
 import { LEAD_COOKIE } from "@/lib/lead-cookie";
 import { getCurrentUser } from "@/lib/session";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -27,7 +28,7 @@ const inter = Inter({
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://learn.sortnow.co"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "sortNow Learn",
     template: "%s · sortNow Learn",
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
     siteName: "sortNow Learn",
     title: "sortNow Learn",
     description: "Short video lessons, plain-English notes, and a coach you can ask while you watch.",
-    url: "https://learn.sortnow.co",
+    url: SITE_URL,
   },
   twitter: { card: "summary" },
 };
