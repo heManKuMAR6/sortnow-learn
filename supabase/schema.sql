@@ -452,3 +452,77 @@ create policy "avatars insert own" on storage.objects for insert to authenticate
 drop policy if exists "avatars update own" on storage.objects;
 create policy "avatars update own" on storage.objects for update to authenticated
   using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- =====================================================================
+-- Jobs board, managed by admins from /admin/jobs.
+-- Public visitors can read OPEN roles only. Only admins can create, edit,
+-- close or delete. Roles never carry a recruiter's contact: sortNow is the contact.
+-- =====================================================================
+
+create table if not exists public.admins (
+  user_id uuid primary key references auth.users (id) on delete cascade
+);
+alter table public.admins enable row level security;
+drop policy if exists "admins read own" on public.admins;
+create policy "admins read own" on public.admins for select using (auth.uid() = user_id);
+revoke all on public.admins from anon, authenticated;
+grant select on public.admins to authenticated;
+-- No one can add themselves: admins are added here, in the SQL editor, by the project owner:
+--   insert into public.admins (user_id)
+--   select id from auth.users where email = 'YOUR-LOGIN-EMAIL' on conflict do nothing;
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (select 1 from public.admins where user_id = auth.uid());
+$$;
+revoke all on function public.is_admin() from public;
+grant execute on function public.is_admin() to anon, authenticated;
+
+create table if not exists public.jobs (
+  slug text primary key check (slug ~ '^[a-z0-9][a-z0-9-]{1,80}$'),
+  title text not null check (char_length(title) between 1 and 120),
+  company text check (company is null or char_length(company) <= 80),
+  location text not null check (char_length(location) between 1 and 80),
+  mode text not null check (mode in ('Remote', 'Hybrid', 'On-site')),
+  level text not null check (level in ('Entry', 'Mid', 'Senior', 'Lead', 'Manager', 'Principal')),
+  type text check (type is null or type in ('Full-time', 'Part-time', 'Contract', 'Internship')),
+  posted date not null default current_date,
+  summary text not null default '' check (char_length(summary) <= 300),
+  about text[] not null default '{}' check (cardinality(about) <= 12),
+  skills text[] not null default '{}' check (cardinality(skills) <= 20),
+  status text not null default 'open' check (status in ('open', 'closed')),
+  created_at timestamptz not null default now()
+);
+create index if not exists jobs_status_posted_idx on public.jobs (status, posted desc);
+alter table public.jobs enable row level security;
+
+drop policy if exists "jobs public read open" on public.jobs;
+create policy "jobs public read open" on public.jobs for select using (status = 'open' or public.is_admin());
+drop policy if exists "jobs admin insert" on public.jobs;
+create policy "jobs admin insert" on public.jobs for insert with check (public.is_admin());
+drop policy if exists "jobs admin update" on public.jobs;
+create policy "jobs admin update" on public.jobs for update using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "jobs admin delete" on public.jobs;
+create policy "jobs admin delete" on public.jobs for delete using (public.is_admin());
+
+revoke all on public.jobs from anon, authenticated;
+grant select on public.jobs to anon, authenticated;
+grant insert, update, delete on public.jobs to authenticated;
+
+-- Starter listings. Safe to re-run: existing rows are left alone, so edits made in
+-- /admin/jobs are never overwritten.
+insert into public.jobs (slug, title, company, location, mode, level, type, posted, summary, about, skills, status) values
+  ('sr-lead-ai-engineer-plano', 'Sr/Lead AI Engineer', null, 'Plano, Dallas, TX', 'On-site', 'Senior', null, date '2026-06-08', 'Design, build and scale production-grade AI and machine learning systems.', array['We are looking for a Senior/Lead AI Engineer to design, build, and scale production-grade AI and machine learning systems.','The role bridges ML engineering, agentic AI and data engineering, with strong Python and SQL expected.']::text[], array['Python','ML Engineering','Agentic AI','Data Engineering with SQL']::text[], 'open'),
+  ('lead-ai-project-manager', 'Lead AI Project Manager', null, 'Remote', 'Remote', 'Manager', null, date '2026-06-04', 'Own AI product strategy, roadmap and go-to-market for AI-powered solutions in retirement and wealth.', array['Lead the AI product strategy, vision, roadmap, and go-to-market execution for AI-powered solutions serving retirement participants, financial advisors, and plan sponsors, for a client''s digital and wealth business.']::text[], array['LLM product experience','RAG architecture fluency','Agentic AI product design','Model evaluation and metrics','Data fluency','AI tooling in practice']::text[], 'open'),
+  ('lead-ai-engineer-iii', 'Lead AI Engineer III', null, 'Remote', 'Remote', 'Lead', null, date '2026-06-04', 'Top of the individual contributor track: architect and lead AI engineering work.', array['The top of the individual contributor track, equivalent to Staff at most technology companies and to a C14 / SVP-equivalent in financial services engineering.','Architect and lead development across APIs, backend services and data pipelines, using AI coding tools day to day.']::text[], array['Rust','TypeScript','Solana','RAG architectures','Prompt pipelines','Claude Code','GitHub Copilot','Cursor or equivalent','APIs and backend services','Data pipelines']::text[], 'open'),
+  ('lead-ai-engineer-design', 'Lead AI Engineer (design-focused)', null, 'Remote', 'Remote', 'Senior', null, date '2026-06-04', 'Lead / Principal individual contributor shaping product decisions for AI tools through interaction design.', array['Leveled as a Lead / Principal individual contributor, equivalent to Staff Designer at technology companies.','At this level the designer shapes product decisions, not just design artifacts.']::text[], array['Figma','Protopie','Voiceflow','WCAG 2.2 AA','Interaction design for AI tools']::text[], 'open'),
+  ('ai-ml-architect-mlops', 'AI/ML Architect (MLOps: Dataiku & Vertex AI)', null, 'Austin, TX', 'On-site', 'Mid', null, date '2026-05-30', 'Define, architect and operationalize enterprise-grade MLOps platforms on Dataiku and Google Cloud Vertex AI.', array['Principal AI/ML Architect responsible for defining, architecting, and operationalizing enterprise-grade MLOps platforms using Dataiku and Google Cloud Vertex AI.']::text[], array['MLOps','Dataiku','Google Cloud Vertex AI']::text[], 'open'),
+  ('iam-engineer-humana', 'IAM Engineer', 'Humana', 'Dallas, TX', 'Hybrid', 'Mid', null, date '2026-05-21', 'Customer identity and access management (CIAM) software engineering at Humana.', array['A customer identity and access management (CIAM) software engineering role at Humana, based in Dallas on a hybrid schedule.']::text[], array['Java','Linux','ForgeRock','Vue JS']::text[], 'open'),
+  ('ai-architect-hitachi', 'AI Architect', 'Hitachi', 'Dallas, TX', 'On-site', 'Principal', null, date '2026-05-20', 'Hands-on enterprise AI and LLM architect for next-generation AI platforms.', array['We are seeking a highly skilled and hands-on AI Architect to lead the design and implementation of next-generation enterprise AI platforms powered by Large Language Models (LLMs).']::text[], array['Enterprise AI & LLM architecture','Amazon Bedrock','RAG pipelines']::text[], 'open'),
+  ('azure-devops-java-baron-budd', 'Azure DevOps with Java', 'Baron & Budd', 'Dallas, TX', 'Hybrid', 'Mid', null, date '2026-05-20', 'High-impact DevOps engineer with strong Java experience to support and modernize Baron & Budd''s systems.', array['We are seeking a high-impact DevOps Engineer with strong Java experience to support and modernize Baron & Budd''s systems, based in Dallas, Texas.']::text[], array['Azure DevOps CI/CD pipelines','Kubernetes','Java','Docker']::text[], 'open')
+on conflict (slug) do nothing;

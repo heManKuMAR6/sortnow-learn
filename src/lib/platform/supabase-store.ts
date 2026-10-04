@@ -1,3 +1,4 @@
+import type { Job } from "@/lib/jobs";
 import { suggestHandle } from "@/lib/platform/handle";
 import type { Store } from "@/lib/platform/store";
 import { createClient } from "@/lib/supabase/server";
@@ -64,6 +65,40 @@ function toRow(patch: ProfilePatch) {
   if (patch.links !== undefined) row.links = patch.links;
   if (patch.avatarUrl !== undefined) row.avatar_url = patch.avatarUrl;
   return row;
+}
+
+const JOB_COLS = "slug, title, company, location, mode, level, type, posted, summary, about, skills, status";
+
+type JobRow = {
+  slug: string;
+  title: string;
+  company: string | null;
+  location: string;
+  mode: Job["mode"];
+  level: Job["level"];
+  type: Job["type"] | null;
+  posted: string;
+  summary: string;
+  about: string[];
+  skills: string[];
+  status: Job["status"];
+};
+
+function toJob(r: JobRow): Job {
+  return {
+    slug: r.slug,
+    title: r.title,
+    ...(r.company ? { company: r.company } : {}),
+    location: r.location,
+    mode: r.mode,
+    level: r.level,
+    ...(r.type ? { type: r.type } : {}),
+    posted: r.posted,
+    summary: r.summary,
+    about: r.about,
+    skills: r.skills,
+    status: r.status,
+  };
 }
 
 function fail(error: { message: string; code?: string }): never {
@@ -258,5 +293,68 @@ export const supabaseStore: Store = {
     const supabase = await db();
     const { error } = await supabase.from("newsletter_subscribers").insert({ email, name, source });
     if (error && error.code !== "23505") fail(error);
+  },
+
+  async isAdmin(user) {
+    const supabase = await db();
+    const { data, error } = await supabase.from("admins").select("user_id").eq("user_id", user.id).maybeSingle();
+    if (error) fail(error);
+    return Boolean(data);
+  },
+
+  async listJobs(opts) {
+    const supabase = await db();
+    let q = supabase.from("jobs").select(JOB_COLS).order("posted", { ascending: false });
+    if (!opts?.includeClosed) q = q.eq("status", "open");
+    const { data, error } = await q;
+    if (error) fail(error);
+    return ((data ?? []) as JobRow[]).map(toJob);
+  },
+
+  async getJob(slug, opts) {
+    const supabase = await db();
+    let q = supabase.from("jobs").select(JOB_COLS).eq("slug", slug);
+    if (!opts?.includeClosed) q = q.eq("status", "open");
+    const { data, error } = await q.maybeSingle();
+    if (error) fail(error);
+    return data ? toJob(data as JobRow) : null;
+  },
+
+  async saveJob(input) {
+    const supabase = await db();
+    const row = {
+      slug: input.slug,
+      title: input.title,
+      company: input.company ?? null,
+      location: input.location,
+      mode: input.mode,
+      level: input.level,
+      type: input.type ?? null,
+      posted: input.posted,
+      summary: input.summary,
+      about: input.about,
+      skills: input.skills,
+      ...(input.status ? { status: input.status } : {}),
+    };
+    const { data, error } = await supabase.from("jobs").upsert(row, { onConflict: "slug" }).select(JOB_COLS).single();
+    if (error) {
+      if (error.code === "42501") throw new StoreError("Only admins can change jobs.", 403);
+      fail(error);
+    }
+    return toJob(data as JobRow);
+  },
+
+  async setJobStatus(slug, status) {
+    const supabase = await db();
+    const { data, error } = await supabase.from("jobs").update({ status }).eq("slug", slug).select("slug");
+    if (error) fail(error);
+    if (!data?.length) throw new StoreError("Only admins can change jobs.", 403);
+  },
+
+  async deleteJob(slug) {
+    const supabase = await db();
+    const { data, error } = await supabase.from("jobs").delete().eq("slug", slug).select("slug");
+    if (error) fail(error);
+    if (!data?.length) throw new StoreError("Only admins can change jobs.", 403);
   },
 };
