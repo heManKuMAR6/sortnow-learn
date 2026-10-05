@@ -3,20 +3,16 @@ import Link from "next/link";
 import { AuthForm } from "@/components/AuthForm";
 import { AuthShell } from "@/components/AuthShell";
 import { redirect } from "next/navigation";
-import { isSupabaseConfigured } from "@/lib/env";
+import { isDemoEnabled, isSupabaseConfigured } from "@/lib/env";
+import { safeNext } from "@/lib/safe-next";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Sign in" };
 
-function safeNext(value: string | string[] | undefined): string {
-  const v = Array.isArray(value) ? value[0] : value;
-  return v && v.startsWith("/") && !v.startsWith("//") ? v : "/dashboard";
-}
-
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string | string[]; error?: string | string[] }>;
 }) {
   const { next, error } = await searchParams;
   const target = safeNext(next);
@@ -35,7 +31,7 @@ export default async function LoginPage({
       }
     >
       {error ? <p className="mb-4 text-sm text-coral">Sign-in did not complete. Please try again.</p> : null}
-      <AuthForm mode="signin" demoMode={!isSupabaseConfigured()} next={target} />
+      <AuthForm mode="signin" demoMode={!isSupabaseConfigured()} unavailable={!isSupabaseConfigured() && !isDemoEnabled()} next={target} />
     </AuthShell>
   );
 }

@@ -104,6 +104,8 @@ function toJob(r: JobRow): Job {
 function fail(error: { message: string; code?: string }): never {
   if (error.code === "23505") throw new StoreError("That handle is taken.", 409);
   if (error.code === "23514") throw new StoreError("One of those values is not allowed.");
+  if (/unknown (lesson|challenge)/i.test(error.message)) throw new StoreError("We do not recognise that.", 404);
+  if (/wrong number of answers/i.test(error.message)) throw new StoreError("Answer every question first.");
   // Keep the real reason in the server log; visitors get a calm message.
   console.error("[supabase-store]", error.code ?? "", error.message);
   throw new StoreError("Something went wrong on our side. Please try again in a bit.", 500);
@@ -182,31 +184,65 @@ export const supabaseStore: Store = {
     return this.updateProfile(id, { avatarUrl: `${data.publicUrl}?v=${Date.now()}` });
   },
 
-  async checkIn(_id, day) {
+  async getTimezone(id) {
     const supabase = await db();
-    const { data, error } = await supabase.rpc("checkin", { p_day: day });
+    const { data, error } = await supabase.from("profile_private").select("timezone").eq("user_id", id).maybeSingle();
     if (error) fail(error);
-    const row = (Array.isArray(data) ? data[0] : data) as
-      | { o_awarded: boolean; o_points: number; o_streak: number; o_longest: number }
-      | undefined;
-    if (!row) throw new StoreError("Check-in failed.", 500);
-    return { awarded: row.o_awarded, points: row.o_points, streak: row.o_streak, longest: row.o_longest };
+    return (data as { timezone: string } | null)?.timezone ?? "UTC";
   },
 
-  async award(_id, kind, ref, points, day, score) {
+  async setTimezone(_id, tz) {
     const supabase = await db();
-    const { data, error } = await supabase.rpc("award", {
-      p_kind: kind,
-      p_ref: ref,
-      p_points: points,
-      p_day: day,
-      p_score: score?.score ?? null,
-      p_total: score?.total ?? null,
-    });
+    const { data, error } = await supabase.rpc("set_timezone", { p_tz: tz });
     if (error) fail(error);
-    const row = (Array.isArray(data) ? data[0] : data) as { o_awarded: boolean; o_points: number } | undefined;
+    return typeof data === "string" ? data : "UTC";
+  },
+
+  async checkIn() {
+    const supabase = await db();
+    const { data, error } = await supabase.rpc("checkin");
+    if (error) fail(error);
+    const row = (Array.isArray(data) ? data[0] : data) as
+      | { o_awarded: boolean; o_points: number; o_streak: number; o_longest: number; o_day: string }
+      | undefined;
+    if (!row) throw new StoreError("Check-in failed.", 500);
+    return { awarded: row.o_awarded, points: row.o_points, streak: row.o_streak, longest: row.o_longest, day: row.o_day };
+  },
+
+  async completeLesson(_id, slug) {
+    const supabase = await db();
+    const { data, error } = await supabase.rpc("complete_lesson", { p_slug: slug });
+    if (error) fail(error);
+    const row = (Array.isArray(data) ? data[0] : data) as { o_awarded: boolean; o_points: number; o_gained: number } | undefined;
     if (!row) throw new StoreError("Could not record that.", 500);
-    return { awarded: row.o_awarded, points: row.o_points };
+    return { awarded: row.o_awarded, points: row.o_points, gained: row.o_gained };
+  },
+
+  async submitChallenge(_id, slug, answers) {
+    const supabase = await db();
+    const { data, error } = await supabase.rpc("submit_challenge", { p_slug: slug, p_answers: answers });
+    if (error) fail(error);
+    const row = (Array.isArray(data) ? data[0] : data) as
+      | { o_score: number; o_total: number; o_passed: boolean; o_awarded: boolean; o_gained: number; o_points: number; o_correct: number[] }
+      | undefined;
+    if (!row) throw new StoreError("Could not grade that.", 500);
+    return {
+      score: row.o_score,
+      total: row.o_total,
+      passed: row.o_passed,
+      awarded: row.o_awarded,
+      gained: row.o_gained,
+      points: row.o_points,
+      correct: row.o_correct,
+    };
+  },
+
+  async deleteAccount(id) {
+    const supabase = await db();
+    // Best effort: the picture is not covered by the cascade.
+    await supabase.storage.from("avatars").remove([`${id}/avatar.jpg`]).catch(() => undefined);
+    const { error } = await supabase.rpc("delete_my_account");
+    if (error) fail(error);
   },
 
   async completed(id) {

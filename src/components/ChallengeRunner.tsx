@@ -3,9 +3,9 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PublicChallenge } from "@/lib/challenges";
-import { localDay, toast } from "@/lib/toast";
+import { toast } from "@/lib/toast";
 
 type Result = { correct: boolean; answer: number; why: string };
 type Graded = {
@@ -20,14 +20,18 @@ type Graded = {
 
 const KEYS = ["A", "B", "C", "D", "E"];
 
+const PENDING_KEY = "sn_pending_challenge";
+
 export function ChallengeRunner({
   challenge,
   nextHref,
   nextTitle,
+  signedIn,
 }: {
   challenge: PublicChallenge;
   nextHref: string | null;
   nextTitle: string | null;
+  signedIn: boolean;
 }) {
   const router = useRouter();
   const reduce = useReducedMotion();
@@ -45,14 +49,14 @@ export function ChallengeRunner({
     setAnswers((a) => a.map((v, idx) => (idx === step ? i : v)));
   }
 
-  async function submit() {
+  async function submit(given: (number | null)[] = answers) {
     setError(null);
     setPending(true);
     try {
       const response = await fetch(`/api/challenges/${challenge.slug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers, day: localDay() }),
+        body: JSON.stringify({ answers: given }),
       });
       const body = (await response.json()) as Graded & { error?: string };
       if (!response.ok) {
@@ -60,6 +64,14 @@ export function ChallengeRunner({
         return;
       }
       setGraded(body);
+      if (body.passed && !body.signedIn) {
+        // Remember the passed attempt so it can be claimed right after sign-up.
+        try {
+          window.localStorage.setItem(PENDING_KEY, JSON.stringify({ slug: challenge.slug, answers: given, at: Date.now() }));
+        } catch {
+          // ignore
+        }
+      }
       if (body.gained > 0) {
         toast({
           badge: `+${body.gained}`,
@@ -76,6 +88,27 @@ export function ChallengeRunner({
       setPending(false);
     }
   }
+
+  // Back from sign-up with a passed attempt waiting: claim it, so the points are not lost.
+  const claimed = useRef(false);
+  useEffect(() => {
+    if (!signedIn || claimed.current) return;
+    claimed.current = true;
+    try {
+      const raw = window.localStorage.getItem(PENDING_KEY);
+      if (!raw) return;
+      const pendingAttempt = JSON.parse(raw) as { slug?: string; answers?: (number | null)[]; at?: number };
+      if (pendingAttempt.slug !== challenge.slug) return;
+      window.localStorage.removeItem(PENDING_KEY);
+      if (!Array.isArray(pendingAttempt.answers) || Date.now() - (pendingAttempt.at ?? 0) > 24 * 3600 * 1000) return;
+      setAnswers(pendingAttempt.answers);
+      setStep(total - 1);
+      void submit(pendingAttempt.answers);
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signedIn]);
 
   function again() {
     setGraded(null);
@@ -176,22 +209,25 @@ export function ChallengeRunner({
           exit={reduce ? { opacity: 0 } : { opacity: 0, x: -24 }}
           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h2 className="text-2xl leading-snug sm:text-3xl">{question.q}</h2>
-          <div className="mt-5 grid gap-3" role="radiogroup" aria-label="Answers">
+          <h2 className="text-2xl leading-snug sm:text-3xl" aria-live="polite">{question.q}</h2>
+          <fieldset className="mt-5 grid gap-3">
+            <legend className="sr-only">Choose one answer</legend>
             {question.options.map((option, i) => (
-              <button
-                key={option}
-                type="button"
-                role="radio"
-                aria-checked={picked === i}
-                className={`opt${picked === i ? " picked" : ""}`}
-                onClick={() => pick(i)}
-              >
-                <span className="opt-key">{KEYS[i]}</span>
+              <label key={option} className={`opt${picked === i ? " picked" : ""}`}>
+                <input
+                  type="radio"
+                  name={`q${step}`}
+                  className="sr-only"
+                  checked={picked === i}
+                  onChange={() => pick(i)}
+                />
+                <span className="opt-key" aria-hidden="true">
+                  {KEYS[i]}
+                </span>
                 <span>{option}</span>
-              </button>
+              </label>
             ))}
-          </div>
+          </fieldset>
         </motion.div>
       </AnimatePresence>
 

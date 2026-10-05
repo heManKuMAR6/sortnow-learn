@@ -17,6 +17,8 @@ export type Profile = {
   challengesDone: number;
   lessonsDone: number;
   createdAt: string;
+  /** IANA timezone. Only loaded for the signed-in person, never public. */
+  timezone?: string;
 };
 
 export type ProfilePatch = Partial<
@@ -34,9 +36,18 @@ export type PortfolioItem = {
 
 export type PortfolioInput = Pick<PortfolioItem, "title" | "description" | "url" | "tags">;
 
-export type CheckInResult = { awarded: boolean; points: number; streak: number; longest: number };
-export type AwardResult = { awarded: boolean; points: number };
-export type AwardKind = "challenge" | "lesson";
+export type CheckInResult = { awarded: boolean; points: number; streak: number; longest: number; day: string };
+export type LessonResult = { awarded: boolean; points: number; gained: number };
+export type ChallengeResult = {
+  score: number;
+  total: number;
+  passed: boolean;
+  awarded: boolean;
+  gained: number;
+  points: number;
+  /** The right option for each question, in order. */
+  correct: number[];
+};
 
 export type Completed = {
   challenges: Record<string, { score: number; total: number }>;

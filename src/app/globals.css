@@ -8,7 +8,7 @@
   --color-off-white: #fbfbfd;
   --color-soft-charcoal: #1d1d1f;
   --color-secondary: #6e6e73;
-  --color-muted: #8e8e93;
+  --color-muted: #76767a;
   --glass-bg: rgba(255, 255, 255, 0.65);
   --glass-bg-hover: rgba(255, 255, 255, 0.88);
   --glass-border: rgba(255, 255, 255, 0.6);
@@ -28,7 +28,7 @@
   --color-paper: #fbfbfd;
   --color-ink: #1d1d1f;
   --color-secondary: #6e6e73;
-  --color-muted: #8e8e93;
+  --color-muted: #76767a;
   --font-sans: var(--font-inter), Inter, "Segoe UI", sans-serif;
   --font-heading: var(--font-outfit), Outfit, "Segoe UI", sans-serif;
 }
@@ -1384,4 +1384,34 @@ textarea.field {
   font-size: 0.8rem;
   color: var(--color-muted);
   border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Reduced motion: stop every animation and transition, and show final states. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .heat-cell {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Native radios inside the challenge options: visible keyboard focus. */
+.opt:has(input:focus-visible) {
+  outline: 2px solid var(--color-deep-teal);
+  outline-offset: 2px;
+}
+
+.opt:has(input:checked) {
+  border-color: var(--color-deep-teal);
+  background: rgba(143, 221, 231, 0.25);
 }

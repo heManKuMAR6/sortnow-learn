@@ -368,3 +368,10 @@ export function dailyChallenge(day: string): Challenge {
   const n = Math.round(Date.parse(`${day}T00:00:00Z`) / 86_400_000);
   return challenges[((n % challenges.length) + challenges.length) % challenges.length] as Challenge;
 }
+
+/** Grades answers in code. Used for guests (no points) and the local preview. Signed-in people are graded in the database. */
+export function gradeAnswers(challenge: Challenge, answers: number[]): { score: number; total: number; passed: boolean; correct: number[] } {
+  const total = challenge.questions.length;
+  const score = challenge.questions.filter((q, i) => answers[i] === q.answer).length;
+  return { score, total, passed: score / total >= PASS_RATIO, correct: challenge.questions.map((q) => q.answer) };
+}

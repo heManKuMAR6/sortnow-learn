@@ -3,14 +3,15 @@ import Link from "next/link";
 import { AuthForm } from "@/components/AuthForm";
 import { AuthShell } from "@/components/AuthShell";
 import { redirect } from "next/navigation";
-import { isSupabaseConfigured } from "@/lib/env";
+import { isDemoEnabled, isSupabaseConfigured } from "@/lib/env";
+import { safeNext } from "@/lib/safe-next";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Create your account" };
 
-export default async function SignupPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+export default async function SignupPage({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
   const { next } = await searchParams;
-  const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+  const target = safeNext(next);
   if (await getCurrentUser()) redirect(target);
   return (
     <AuthShell
@@ -25,7 +26,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
         </>
       }
     >
-      <AuthForm mode="signup" demoMode={!isSupabaseConfigured()} next={target} />
+      <AuthForm mode="signup" demoMode={!isSupabaseConfigured()} unavailable={!isSupabaseConfigured() && !isDemoEnabled()} next={target} />
     </AuthShell>
   );
 }

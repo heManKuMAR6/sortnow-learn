@@ -123,7 +123,7 @@ export default async function ProfilePage({ params }: { params: Promise<Params> 
         <Reveal>
           <section className="glass grid grid-cols-2 divide-black/5 sm:grid-cols-5 sm:divide-x">
             <Stat label="Points" value={profile.points} />
-            <Stat label="Day streak" value={liveStreak(profile, today)} hint={`Best ${profile.longestStreak}`} />
+            <Stat label="Day streak" value={liveStreak(profile, today, 1)} hint={`Best ${profile.longestStreak}`} />
             <Stat label="Challenges" value={`${profile.challengesDone}/${challenges.length}`} />
             <Stat label="Lessons" value={`${profile.lessonsDone}/${lessons.length}`} />
             <Stat label="Badges" value={badges.filter((b) => b.earned).length} hint={`of ${badges.length}`} />

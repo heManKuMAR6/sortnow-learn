@@ -16,8 +16,9 @@ The app runs with no setup in a labeled preview mode, but accounts there are tem
 4. Supabase, Authentication, URL Configuration: set Site URL to `https://sortnow-learn.vercel.app` and add `https://sortnow-learn.vercel.app/auth/callback` to Redirect URLs.
 5. Google and GitHub sign-in (optional): Supabase, Authentication, Providers. For Google create an OAuth client in Google Cloud Console; for GitHub create an OAuth App in GitHub Developer settings. Paste each client ID and secret into Supabase, and add the callback URL Supabase shows (`https://<project-ref>.supabase.co/auth/v1/callback`) to the Google client / GitHub app. Then set `NEXT_PUBLIC_AUTH_PROVIDERS=google,github` (only the ones you enabled) in Vercel; a button never shows until it is listed there. Email sign-up works without any of this.
 6. Email sign-up: Supabase's built-in mailer only sends a few emails an hour, so while testing turn "Confirm email" off (Authentication, Providers, Email). Turn it back on, with your own SMTP, before real traffic.
-7. Become an admin (so you can manage jobs): sign up on the site first, then run the `insert into public.admins ...` line from the table below with your own login email.
-8. Open `/status` on the site to check that every table from `schema.sql` exists.
+7. Set `APP_SECRET` in Vercel to a long random value (`openssl rand -hex 32`). It signs the cookies that unlock reel drops, so without it they are easy to forge.
+8. Become an admin (so you can manage jobs): sign up on the site first, then run the `insert into public.admins ...` line from the table below with your own login email.
+9. Open `/status` on the site to check that every table from `schema.sql` exists.
 
 Where things live:
 
@@ -26,7 +27,7 @@ Where things live:
 | Post, edit, close or delete a job | Sign in as an admin and open `/admin/jobs` (admins see a "Manage jobs" button on `/jobs`) |
 | Make someone an admin | Supabase SQL editor: `insert into public.admins (user_id) select id from auth.users where email = 'their-login-email' on conflict do nothing;` Run it after they have signed up once |
 | Publish a reel drop | Append to `src/lib/ig-posts.ts`; link the reel to `/ig/<slug>` |
-| Add a challenge | Append to `src/lib/challenges.ts` |
+| Add a challenge or lesson | Edit `src/lib/challenges.ts` or `src/lib/content.ts`, run `npm run gen:catalog`, then paste `supabase/schema.sql` into the Supabase SQL editor again. Points and grading live in the database and must be regenerated |
 | See leads, job applicants, newsletter signups | Supabase table editor: `leads`, `job_applications`, `newsletter_subscribers` |
 
 ## Run locally

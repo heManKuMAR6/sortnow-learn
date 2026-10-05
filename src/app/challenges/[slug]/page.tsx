@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AiIcon } from "@/components/AiIcon";
 import { ChallengeRunner } from "@/components/ChallengeRunner";
 import { challenges, getChallenge, publicChallenge } from "@/lib/challenges";
+import { getCurrentUser } from "@/lib/session";
 
 type Params = { slug: string };
 
@@ -21,6 +22,7 @@ export default async function ChallengePage({ params }: { params: Promise<Params
   const { slug } = await params;
   const challenge = getChallenge(slug);
   if (!challenge) notFound();
+  const user = await getCurrentUser();
   const index = challenges.findIndex((c) => c.slug === slug);
   const next = challenges[(index + 1) % challenges.length];
 
@@ -44,6 +46,7 @@ export default async function ChallengePage({ params }: { params: Promise<Params
       </div>
       <div className="mt-8">
         <ChallengeRunner
+          signedIn={Boolean(user)}
           challenge={publicChallenge(challenge)}
           nextHref={next && next.slug !== slug ? `/challenges/${next.slug}` : null}
           nextTitle={next && next.slug !== slug ? next.title : null}

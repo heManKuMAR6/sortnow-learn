@@ -1,11 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useScope } from "@/components/ProgressProvider";
 import { setLessonDone, useCompleted } from "@/lib/progress";
 import { localDay, toast } from "@/lib/toast";
 
 export function DoneBadge({ slug }: { slug: string }) {
-  const done = useCompleted().includes(slug);
+  const done = useCompleted(useScope()).includes(slug);
   if (!done) return null;
   return (
     <span className="chip chip-teal" title="You marked this lesson complete">
@@ -15,7 +17,7 @@ export function DoneBadge({ slug }: { slug: string }) {
 }
 
 export function TrackProgress({ slugs, label }: { slugs: string[]; label: string }) {
-  const completed = useCompleted();
+  const completed = useCompleted(useScope());
   const count = slugs.filter((slug) => completed.includes(slug)).length;
   const pct = slugs.length ? Math.round((count / slugs.length) * 100) : 0;
   return (
@@ -41,26 +43,48 @@ export function TrackProgress({ slugs, label }: { slugs: string[]; label: string
 }
 
 export function CompleteButton({ slug, signedIn }: { slug: string; signedIn: boolean }) {
-  const done = useCompleted().includes(slug);
+  const scope = useScope();
+  const done = useCompleted(scope).includes(slug);
   const router = useRouter();
+  const [pending, setPending] = useState(false);
 
-  async function toggle() {
-    setLessonDone(slug, !done);
-    if (done || !signedIn) return;
+  async function complete() {
+    // Guests keep a private tick on this device. Signed-in progress is saved on the server
+    // first, so every device agrees, and it cannot be undone (the points were already paid).
+    if (!signedIn) {
+      setLessonDone(scope, slug, !done);
+      return;
+    }
+    setPending(true);
     try {
       const response = await fetch("/api/progress/lesson", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug, day: localDay() }),
       });
-      const body = (await response.json()) as { gained?: number };
-      if (response.ok && body.gained) {
-        toast({ badge: `+${body.gained}`, title: "Lesson complete", body: "Nice. That is one more piece in place.", icon: "bulb", tone: "points" });
-        router.refresh();
+      const body = (await response.json()) as { gained?: number; error?: string };
+      if (!response.ok) {
+        toast({ title: "Could not save that", body: body.error ?? "Please try again.", icon: "shield" });
+        return;
       }
+      setLessonDone(scope, slug, true);
+      if (body.gained) {
+        toast({ badge: `+${body.gained}`, title: "Lesson complete", body: "Nice. That is one more piece in place.", icon: "bulb", tone: "points" });
+      }
+      router.refresh();
     } catch {
-      // The tick is saved on this device either way.
+      toast({ title: "Could not save that", body: "Check your connection and try again.", icon: "shield" });
+    } finally {
+      setPending(false);
     }
+  }
+
+  if (signedIn && done) {
+    return (
+      <span className="pill-white" aria-live="polite">
+        ✓ Completed
+      </span>
+    );
   }
 
   return (
@@ -68,10 +92,11 @@ export function CompleteButton({ slug, signedIn }: { slug: string; signedIn: boo
       type="button"
       data-track={`complete-${slug}`}
       aria-pressed={done}
-      onClick={() => void toggle()}
+      disabled={pending}
+      onClick={() => void complete()}
       className={done ? "pill-white" : "pill-teal"}
     >
-      {done ? "✓ Completed · undo" : "Mark as complete"}
+      {done ? "✓ Completed · undo" : pending ? "Saving…" : "Mark as complete"}
     </button>
   );
 }

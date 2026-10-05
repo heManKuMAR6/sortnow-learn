@@ -7,7 +7,7 @@ import { Reveal } from "@/components/Reveal";
 import { Stagger, StaggerItem } from "@/components/Stagger";
 import { challenges, dailyChallenge } from "@/lib/challenges";
 import { lessonsFor, lessons, tracks, weeklyNotesNewestFirst } from "@/lib/content";
-import { utcToday } from "@/lib/platform/dates";
+import { getCurrentProfile, todayFor } from "@/lib/current-profile";
 import { safely } from "@/lib/safe";
 import { getStore } from "@/lib/platform/store";
 import { getCurrentUser } from "@/lib/session";
@@ -24,7 +24,7 @@ const steps = [
 
 export default async function HomePage() {
   const user = await getCurrentUser();
-  const today = utcToday();
+  const today = todayFor(await getCurrentProfile(user));
   const featured = dailyChallenge(today);
   const done = user
     ? (await safely(getStore().completed(user.id), { challenges: {}, lessons: [] }, "home completed")).challenges

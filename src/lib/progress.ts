@@ -2,23 +2,68 @@
 
 import { useSyncExternalStore } from "react";
 
-const KEY = "sortnow_learn_progress";
+// Lesson ticks are kept per browser AND per account: "guest" for someone signed out,
+// otherwise the user id. A second account on the same browser never sees the first one's
+// ticks. For a signed-in person the server is the source of truth and this is a cache.
+const PREFIX = "sortnow_learn_progress";
+const LEGACY_KEY = PREFIX; // old unscoped key, which leaked between accounts
+
+export type Scope = string;
+export const GUEST: Scope = "guest";
+
 const listeners = new Set<() => void>();
 const EMPTY: readonly string[] = [];
-let cache: readonly string[] = EMPTY;
-let cacheRaw: string | null = null;
+const cache = new Map<string, { raw: string | null; list: readonly string[] }>();
 
-function read(): readonly string[] {
+const keyOf = (scope: Scope) => `${PREFIX}:${scope}`;
+
+export function readScope(scope: Scope): readonly string[] {
   try {
-    const raw = window.localStorage.getItem(KEY);
-    if (raw === cacheRaw) return cache;
-    cacheRaw = raw;
+    const raw = window.localStorage.getItem(keyOf(scope));
+    const hit = cache.get(scope);
+    if (hit && hit.raw === raw) return hit.list;
     const parsed: unknown = raw ? JSON.parse(raw) : [];
-    cache = Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : EMPTY;
+    const list = Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : EMPTY;
+    cache.set(scope, { raw, list });
+    return list;
   } catch {
-    cache = EMPTY;
+    return EMPTY;
   }
-  return cache;
+}
+
+function write(scope: Scope, slugs: Iterable<string>) {
+  try {
+    const list = [...new Set(slugs)];
+    if (list.length) window.localStorage.setItem(keyOf(scope), JSON.stringify(list));
+    else window.localStorage.removeItem(keyOf(scope));
+  } catch {
+    // Private mode: it just will not persist.
+  }
+  listeners.forEach((l) => l());
+}
+
+export function setLessonDone(scope: Scope, slug: string, done: boolean) {
+  const current = new Set(readScope(scope));
+  if (done) current.add(slug);
+  else current.delete(slug);
+  write(scope, current);
+}
+
+export function replaceScope(scope: Scope, slugs: readonly string[]) {
+  write(scope, slugs);
+}
+
+export function clearScope(scope: Scope) {
+  write(scope, []);
+}
+
+/** The old shared key could hold someone else's ticks, so it is dropped, not adopted. */
+export function dropLegacyProgress() {
+  try {
+    window.localStorage.removeItem(LEGACY_KEY);
+  } catch {
+    // ignore
+  }
 }
 
 function subscribe(listener: () => void) {
@@ -30,19 +75,11 @@ function subscribe(listener: () => void) {
   };
 }
 
-/** Slugs of lessons this browser has marked complete. Empty on the server. */
-export function useCompleted(): readonly string[] {
-  return useSyncExternalStore(subscribe, read, () => EMPTY);
-}
-
-export function setLessonDone(slug: string, done: boolean) {
-  const current = new Set(read());
-  if (done) current.add(slug);
-  else current.delete(slug);
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify([...current]));
-  } catch {
-    // Private mode: progress just will not persist.
-  }
-  listeners.forEach((l) => l());
+/** Slugs of lessons marked complete in this scope. Empty on the server. */
+export function useCompleted(scope: Scope): readonly string[] {
+  return useSyncExternalStore(
+    subscribe,
+    () => readScope(scope),
+    () => EMPTY,
+  );
 }

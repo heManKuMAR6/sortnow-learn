@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getLessonBySlug } from "@/lib/content";
 import { isOpenAIConfigured } from "@/lib/env";
 import { answerFromLesson } from "@/lib/lesson-answer";
+import { rateLimit } from "@/lib/rate-limit";
+import { getCurrentUser } from "@/lib/session";
 
 type CoachSource = "lesson" | "model";
 
@@ -50,6 +52,19 @@ async function askModel(lessonTitle: string, keyPoints: string[], question: stri
 }
 
 export async function POST(request: Request) {
+  // The coach can call a paid model, so it is for signed-in people only, and rate limited.
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Sign in to use the coach." }, { status: 401 });
+  }
+  const limit = rateLimit(`coach:${user.id}`, 20, 60 * 60 * 1000);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: `You have asked a lot just now. Try again in ${Math.ceil(limit.retryAfterSec / 60)} minutes.` },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSec) } },
+    );
+  }
+
   let json: unknown;
   try {
     json = await request.json();

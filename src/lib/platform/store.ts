@@ -3,10 +3,10 @@ import type { Job, JobInput } from "@/lib/jobs";
 import { demoStore } from "@/lib/platform/demo-store";
 import { supabaseStore } from "@/lib/platform/supabase-store";
 import type {
-  AwardKind,
-  AwardResult,
+  ChallengeResult,
   CheckInResult,
   Completed,
+  LessonResult,
   PortfolioInput,
   PortfolioItem,
   Profile,
@@ -25,15 +25,14 @@ export interface Store {
   ensureProfile(id: string, name: string): Promise<Profile>;
   updateProfile(id: string, patch: ProfilePatch): Promise<Profile>;
   setAvatar(id: string, bytes: Uint8Array, mime: string): Promise<Profile>;
-  checkIn(id: string, day: string): Promise<CheckInResult>;
-  award(
-    id: string,
-    kind: AwardKind,
-    ref: string,
-    points: number,
-    day: string,
-    score?: { score: number; total: number },
-  ): Promise<AwardResult>;
+  /** Rewards. None of these takes a date, a point value or a name from the client. */
+  getTimezone(id: string): Promise<string>;
+  /** Returns the timezone now in effect (a recent change is refused and the old one kept). */
+  setTimezone(id: string, tz: string): Promise<string>;
+  checkIn(id: string): Promise<CheckInResult>;
+  completeLesson(id: string, slug: string): Promise<LessonResult>;
+  submitChallenge(id: string, slug: string, answers: number[]): Promise<ChallengeResult>;
+  deleteAccount(id: string): Promise<void>;
   completed(id: string): Promise<Completed>;
   activity(id: string): Promise<Record<string, number>>;
   portfolio(id: string): Promise<PortfolioItem[]>;

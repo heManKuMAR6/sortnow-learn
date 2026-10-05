@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { DEMO_COOKIE, demoCookieOptions } from "@/lib/demo-session";
+import { DEMO_COOKIE } from "@/lib/demo-session";
+import { demoCookieOptions, serializeDemoSession } from "@/lib/demo-session-server";
 import { signInDemo, signUpDemo } from "@/lib/demo-users";
-import { isSupabaseConfigured } from "@/lib/env";
+import { isDemoEnabled, isSupabaseConfigured } from "@/lib/env";
 import { getStore } from "@/lib/platform/store";
 
 function validEmail(email: string): boolean {
@@ -15,6 +16,9 @@ export async function POST(request: Request) {
       { error: "Use email and password on the sign-in page." },
       { status: 400 },
     );
+  }
+  if (!isDemoEnabled()) {
+    return NextResponse.json({ error: "Sign-in is not set up on this site yet." }, { status: 503 });
   }
 
   let body: unknown;
@@ -50,7 +54,7 @@ export async function POST(request: Request) {
     const jar = await cookies();
     jar.set(
       DEMO_COOKIE,
-      JSON.stringify({ id: user.id, email: user.email, name: name || undefined }),
+      serializeDemoSession({ id: user.id, email: user.email, name: name || undefined }),
       demoCookieOptions(),
     );
     return NextResponse.json({

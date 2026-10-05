@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { isSupabaseConfigured } from "@/lib/env";
-import { LEAD_COOKIE, leadCookieOptions } from "@/lib/lead-cookie";
+import { LEAD_COOKIE, leadCookieOptions, leadCookieValue } from "@/lib/lead-cookie";
 import { appendLocalLead } from "@/lib/leads-store";
 import { createClient } from "@/lib/supabase/server";
 
@@ -44,33 +44,31 @@ export async function POST(request: Request) {
 
   const lead = { name, email, phone, source, path };
 
-  const saveLocal = async () => {
-    await appendLocalLead(lead);
-  };
-
-  try {
-    if (isSupabaseConfigured()) {
-      const supabase = await createClient();
-      const { error } = await supabase.from("leads").insert({
-        name,
-        email,
-        phone,
-        source,
-        path,
-      });
-      if (error) throw new Error(error.message);
-    } else {
-      await saveLocal();
-    }
-  } catch {
+  let saved = false;
+  if (isSupabaseConfigured()) {
     try {
-      await saveLocal();
-    } catch {
-      // Still let them read. Do not describe where a lead is kept.
+      const supabase = await createClient();
+      const { error } = await supabase.from("leads").insert({ name, email, phone, source, path });
+      if (error) throw new Error(error.message);
+      saved = true;
+    } catch (error) {
+      console.error("[leads] database insert failed:", error instanceof Error ? error.message : error);
     }
+  }
+  if (!saved) {
+    try {
+      await appendLocalLead(lead);
+      saved = true;
+    } catch (error) {
+      console.error("[leads] local fallback failed:", error instanceof Error ? error.message : error);
+    }
+  }
+  if (!saved) {
+    // Do not unlock and do not say it worked: the details were not kept.
+    return NextResponse.json({ error: "We could not save that just now. Please try again in a minute." }, { status: 503 });
   }
 
   const jar = await cookies();
-  jar.set(LEAD_COOKIE, "1", leadCookieOptions());
+  jar.set(LEAD_COOKIE, leadCookieValue(), leadCookieOptions());
   return NextResponse.json({ ok: true });
 }

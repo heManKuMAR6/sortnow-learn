@@ -11,8 +11,8 @@ import { StatCard } from "@/components/StatCard";
 import { badgesFor } from "@/lib/badges";
 import { challenges, dailyChallenge } from "@/lib/challenges";
 import { lessons } from "@/lib/content";
-import { getCurrentProfile } from "@/lib/current-profile";
-import { liveStreak, utcToday } from "@/lib/platform/dates";
+import { getCurrentProfile, todayFor } from "@/lib/current-profile";
+import { liveStreak } from "@/lib/platform/dates";
 import { safely } from "@/lib/safe";
 import { getStore } from "@/lib/platform/store";
 import { nameFromEmail } from "@/lib/platform/handle";
@@ -39,7 +39,7 @@ export default async function DashboardPage() {
     safely(store.portfolio(user.id), [], "dashboard portfolio"),
   ]);
 
-  const today = utcToday();
+  const today = todayFor(profile);
   const streak = liveStreak(profile, today);
   const checkedInToday = profile.lastActiveDay === today || (profile.lastActiveDay ?? "") > today;
   const featured = dailyChallenge(today);
