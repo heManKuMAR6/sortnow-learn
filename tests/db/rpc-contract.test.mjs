@@ -9,7 +9,7 @@ const { createClient } = require('@supabase/supabase-js');
 const db = new PGlite();
 await db.exec(`
  create role anon nologin; create role authenticated nologin;
- create schema auth; create table auth.users(id uuid primary key);
+ create schema auth; create table auth.users(id uuid primary key, email text, created_at timestamptz default now(), last_sign_in_at timestamptz);
  create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.sub', true),'')::uuid $$;
  create schema storage; create table storage.buckets(id text primary key, name text, public boolean);
  create table storage.objects(name text, bucket_id text);
@@ -49,7 +49,7 @@ let bad=0; const ok=(c,l)=>{console.log(c?'ok  ':'FAIL',l); if(!c) bad++;};
 const rows=d=>Array.isArray(d)?d[0]:d;
 // the exact calls supabase-store.ts makes
 let { data, error } = await supabase.rpc('set_timezone',{ p_tz:'America/Chicago' }); ok(!error&&data==='America/Chicago','set_timezone returns the timezone as a string');
-({ data, error } = await supabase.rpc('checkin')); let r=rows(data); ok(!error&&r.o_awarded===true&&r.o_streak===1&&r.o_points===1&&/^\d{4}-\d{2}-\d{2}$/.test(r.o_day),'checkin: o_awarded/o_streak/o_points and o_day as YYYY-MM-DD');
+({ data, error } = await supabase.rpc('checkin')); let r=rows(data); ok(!error&&r.o_awarded===true&&r.o_streak===0&&r.o_points===1&&/^\d{4}-\d{2}-\d{2}$/.test(r.o_day),'checkin: o_awarded, streak unchanged, o_points and o_day as YYYY-MM-DD');
 ({ data, error } = await supabase.rpc('checkin')); ok(!error&&rows(data).o_awarded===false,'checkin twice in a day -> not awarded');
 ({ data, error } = await supabase.rpc('complete_lesson',{ p_slug:'what-a-neural-network-is' })); r=rows(data); ok(!error&&r.o_awarded&&r.o_gained===5&&r.o_points===6,'complete_lesson: awarded, gained 5, points 6');
 ({ data, error } = await supabase.rpc('complete_lesson',{ p_slug:'nope' })); ok(!!error&&/unknown lesson/i.test(error.message),'complete_lesson(unknown) -> error the store maps to 404: '+error?.message);

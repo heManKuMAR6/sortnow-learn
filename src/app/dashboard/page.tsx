@@ -41,7 +41,7 @@ export default async function DashboardPage() {
 
   const today = todayFor(profile);
   const streak = liveStreak(profile, today);
-  const checkedInToday = profile.lastActiveDay === today || (profile.lastActiveDay ?? "") > today;
+  const streakEarnedToday = (profile.lastActiveDay ?? "") >= today;
   const featured = dailyChallenge(today);
   const nextLesson = lessons.find((l) => !done.lessons.includes(l.slug));
   const firstName = profile.displayName.split(/\s+/)[0] ?? profile.displayName;
@@ -64,9 +64,9 @@ export default async function DashboardPage() {
           <span className="dot">.</span>
         </h1>
         <p className="mt-3 max-w-xl text-lg text-secondary">
-          {streak > 1
-            ? `You are on a ${streak}-day streak. ${checkedInToday ? "Today is counted." : "Check in today to keep it."}`
-            : "Show up today and your streak starts. One small step is enough."}
+          {streak > 0
+            ? `You are on a ${streak}-day streak. ${streakEarnedToday ? "Today is counted." : `Pass today's puzzle, "${featured.title}", to keep it.`}`
+            : `Your streak starts when you pass today's puzzle: "${featured.title}".`}
         </p>
       </Reveal>
 

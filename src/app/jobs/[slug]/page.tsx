@@ -8,7 +8,7 @@ import { formatDay } from "@/lib/format";
 import { loadJob } from "@/lib/jobs-data";
 import { getStore } from "@/lib/platform/store";
 import { safely } from "@/lib/safe";
-import { getCurrentUser } from "@/lib/session";
+import { requireMember } from "@/lib/gate";
 
 type Params = { slug: string };
 
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 
 export default async function JobPage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const user = await getCurrentUser();
+  const user = await requireMember(`/jobs/${slug}`);
   const store = getStore();
   const admin = user ? await safely(store.isAdmin(user), false, "isAdmin") : false;
   const job = await loadJob(slug, admin);
@@ -60,6 +60,41 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
           {job.about.map((p) => (
             <p key={p}>{p}</p>
           ))}
+          {job.experience || job.salary ? (
+            <dl className="mt-2 grid gap-3 text-sm sm:grid-cols-2">
+              {job.experience ? (
+                <div>
+                  <dt className="eyebrow">Experience</dt>
+                  <dd className="mt-1">{job.experience}</dd>
+                </div>
+              ) : null}
+              {job.salary ? (
+                <div>
+                  <dt className="eyebrow">Pay</dt>
+                  <dd className="mt-1">{job.salary}</dd>
+                </div>
+              ) : null}
+            </dl>
+          ) : null}
+          {(
+            [
+              ["What you will do", job.responsibilities],
+              ["What we are looking for", job.requirements],
+              ["Nice to have", job.niceToHave],
+              ["What comes with it", job.benefits],
+            ] as const
+          ).map(([heading, items]) =>
+            items.length ? (
+              <div key={heading} className="mt-4">
+                <h3 className="text-2xl">{heading}</h3>
+                <ul className="mt-2 grid list-disc gap-2 pl-5">
+                  {items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null,
+          )}
           {job.skills.length ? (
             <div className="mt-2">
               <p className="eyebrow mb-2">Skills</p>

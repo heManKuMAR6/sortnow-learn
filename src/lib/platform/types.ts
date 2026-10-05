@@ -13,7 +13,10 @@ export type Profile = {
   points: number;
   streak: number;
   longestStreak: number;
+  /** The last day a streak was earned (a daily challenge passed). */
   lastActiveDay: string | null;
+  /** The last day the +1 check-in was taken. */
+  lastCheckinDay: string | null;
   challengesDone: number;
   lessonsDone: number;
   createdAt: string;
@@ -45,8 +48,14 @@ export type ChallengeResult = {
   awarded: boolean;
   gained: number;
   points: number;
-  /** The right option for each question, in order. */
-  correct: number[];
+  /** The right option for each question, in order. Null until the person passes or uses the last try. */
+  correct: number[] | null;
+  /** Streak after this try, and whether this try earned today's streak day. */
+  streak: number;
+  streakDay: boolean;
+  attemptsLeft: number;
+  /** True when this was today's featured challenge. */
+  daily: boolean;
 };
 
 export type Completed = {

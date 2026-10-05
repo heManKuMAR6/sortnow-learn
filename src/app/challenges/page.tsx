@@ -8,6 +8,7 @@ import { getCurrentProfile, todayFor } from "@/lib/current-profile";
 import { safely } from "@/lib/safe";
 import { getStore } from "@/lib/platform/store";
 import { getCurrentUser } from "@/lib/session";
+import { requireMember } from "@/lib/gate";
 
 export const metadata: Metadata = {
   title: "Challenges",
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ChallengesPage() {
+  await requireMember("/challenges");
   const user = await getCurrentUser();
   const done = user
     ? (await safely(getStore().completed(user.id), { challenges: {}, lessons: [] }, "challenges completed")).challenges
@@ -48,7 +50,7 @@ export default async function ChallengesPage() {
       </Reveal>
 
       <Reveal className="mt-8">
-        <p className="eyebrow mb-3">Today&apos;s pick</p>
+        <p className="eyebrow mb-3">Today&apos;s streak puzzle: pass it to keep your streak</p>
         <ChallengeCard challenge={featured} result={done[featured.slug]} featured />
       </Reveal>
 

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { NotesGate } from "@/components/NotesGate";
+import { hasNotesAccess } from "@/lib/gate";
 import { notFound } from "next/navigation";
 import { Reveal } from "@/components/Reveal";
 import { getPost, posts, postsNewestFirst } from "@/lib/content";
@@ -26,6 +28,7 @@ export default async function PostPage({ params }: { params: Promise<Params> }) 
   const { slug } = await params;
   const post = getPost(slug);
   if (!post) notFound();
+  if (!(await hasNotesAccess())) return <NotesGate next={`/posts/${post.slug}`} />;
 
   const ordered = postsNewestFirst();
   const at = ordered.findIndex((item) => item.slug === post.slug);

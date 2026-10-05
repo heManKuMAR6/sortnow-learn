@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CONSENT_VERSION, SIGNUP_CONSENT_TEXT } from "@/lib/consent";
 import { DEMO_STORAGE_KEY } from "@/lib/demo-session";
 import { safeNext } from "@/lib/safe-next";
 import { createClient } from "@/lib/supabase/client";
@@ -66,6 +67,8 @@ export function AuthForm({
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [canResend, setCanResend] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [newsletter, setNewsletter] = useState(false);
 
   async function resend() {
     setError(null);
@@ -85,6 +88,10 @@ export function AuthForm({
 
   async function oauth(provider: "google" | "github") {
     setError(null);
+    if (mode === "signup" && !agreed) {
+      setError("Please tick the box to agree first.");
+      return;
+    }
     try {
       const supabase = createClient();
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -101,6 +108,10 @@ export function AuthForm({
     event.preventDefault();
     setError(null);
     setNotice(null);
+    if (mode === "signup" && !agreed) {
+      setError("Please tick the box to agree first.");
+      return;
+    }
     setPending(true);
     try {
       if (demoMode) {
@@ -137,13 +148,25 @@ export function AuthForm({
           email,
           password,
           options: {
-            data: { full_name: name.trim() },
+            data: {
+              full_name: name.trim(),
+              consent_at: new Date().toISOString(),
+              consent_version: CONSENT_VERSION,
+              newsletter_opt_in: newsletter,
+            },
             emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
           },
         });
         if (signUpError) {
           setError(friendly(signUpError.message));
           return;
+        }
+        if (data.session && newsletter) {
+          await fetch("/api/newsletter", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ consent: true }),
+          }).catch(() => undefined);
         }
         if (!data.session) {
           setNotice("Almost there. Check your email and tap the link to confirm, then you are in.");
@@ -171,10 +194,31 @@ export function AuthForm({
     return <p className="rounded-2xl bg-sun/30 p-4 text-sm">Sign-in is not set up on this site yet. Please check back soon.</p>;
   }
 
+  const consentBlock =
+    mode === "signup" ? (
+      <div className="grid gap-2 rounded-2xl bg-white/50 p-3 text-sm">
+        <label className="flex items-start gap-2">
+          <input type="checkbox" className="mt-1" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} required />
+          <span>
+            {SIGNUP_CONSENT_TEXT}{" "}
+            <a href="/privacy" target="_blank" rel="noreferrer" className="text-link">
+              Read the privacy notice
+            </a>
+            .
+          </span>
+        </label>
+        <label className="flex items-start gap-2">
+          <input type="checkbox" className="mt-1" checked={newsletter} onChange={(e) => setNewsletter(e.target.checked)} />
+          <span>Also send me the weekly newsletter (optional, unsubscribe in one click).</span>
+        </label>
+      </div>
+    ) : null;
+
   return (
     <div className="grid gap-4">
       {demoMode || PROVIDERS.length === 0 ? null : (
         <>
+          {consentBlock}
           {PROVIDERS.includes("google") ? (
             <button type="button" className="google-btn" data-track="auth-google" onClick={() => void oauth("google")}>
               <GoogleG /> Continue with Google
@@ -232,6 +276,7 @@ export function AuthForm({
             className="field"
           />
         </label>
+        {demoMode || PROVIDERS.length === 0 ? consentBlock : null}
         {error ? <p className="text-sm text-coral">{error}</p> : null}
         {canResend ? (
           <button type="button" className="text-link text-left text-sm" onClick={() => void resend()}>

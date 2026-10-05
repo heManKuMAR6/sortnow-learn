@@ -1,10 +1,10 @@
 import { chromium } from 'playwright';
 import { readFileSync } from 'fs';
-const B=process.env.BASE_URL||'http://localhost:3100'; const b=await chromium.launch();
+const B=process.env.BASE_URL||'http://localhost:3100'; const b=await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 let bad=0; const ok=(c,l)=>{console.log(c?'ok  ':'FAIL',l); if(!c) bad++;};
 const stamp=Date.now()+1;
 const ctxOf=()=>b.newContext({viewport:{width:1280,height:900}});
-async function signup(ctx,name,email){ const p=await ctx.newPage(); await p.goto(B+'/signup',{waitUntil:'networkidle'}); await p.fill('input[name=name]',name); await p.fill('input[name=email]',email); await p.fill('input[name=password]','secret12'); await p.click('button:has-text("Create my account")'); await p.waitForURL('**/dashboard',{timeout:15000}); await p.waitForTimeout(800); return p; }
+async function signup(ctx,name,email){ const p=await ctx.newPage(); await p.goto(B+'/signup',{waitUntil:'networkidle'}); await p.fill('input[name=name]',name); await p.fill('input[name=email]',email); await p.fill('input[name=password]','secret12'); await p.check('input[type=checkbox] >> nth=0'); await p.click('button:has-text("Create my account")'); await p.waitForURL('**/dashboard',{timeout:15000}); await p.waitForTimeout(800); return p; }
 async function signin(ctx,email){ const p=await ctx.newPage(); await p.goto(B+'/login',{waitUntil:'networkidle'}); await p.fill('input[name=email]',email); await p.fill('input[name=password]','secret12'); await p.click('button:has-text("Sign in")'); await p.waitForURL('**/dashboard',{timeout:15000}); await p.waitForTimeout(800); return p; }
 async function signout(p){ await p.goto(B+'/dashboard',{waitUntil:'networkidle'}); await p.click('.avatar-btn'); await p.click('.menu-foot button:has-text("Sign out")'); await p.waitForURL(B+'/'); await p.waitForTimeout(500); }
 const chip=async p=>((await p.locator('.stat-chip').innerText()).replace(/\s+/g,' ').trim());
@@ -44,8 +44,8 @@ ok(okCount===20&&limited===4,`signed-in coach works, then is rate limited (200s:
 // ===== 5. forged rewards through the API
 const rctx=await ctxOf(); await signup(rctx,'Rae Reward',`rae${stamp}@example.com`);
 const c1=await (await rctx.request.post(B+'/api/checkin',{data:{day:'2099-01-01',tz:'UTC',lessons:['fake-lesson','what-a-neural-network-is']}})).json();
-ok(c1.checkin.streak===1&&c1.lessonPoints===5,'a forged day adds no streak; invented lesson ignored, real lesson paid 5 (streak '+c1.checkin.streak+', lesson pts '+c1.lessonPoints+')');
-for (const d of ['2026-01-01','2099-12-31','1999-01-01']) { const c=await (await rctx.request.post(B+'/api/checkin',{data:{day:d,tz:'UTC'}})).json(); ok(!c.checkin.awarded&&c.checkin.streak===1,`submitting day ${d} cannot add a streak day`); }
+ok(c1.checkin.streak===0&&c1.lessonPoints===5,'a forged day adds no streak; invented lesson ignored, real lesson paid 5 (streak '+c1.checkin.streak+', lesson pts '+c1.lessonPoints+')');
+for (const d of ['2026-01-01','2099-12-31','1999-01-01']) { const c=await (await rctx.request.post(B+'/api/checkin',{data:{day:d,tz:'UTC'}})).json(); ok(!c.checkin.awarded&&c.checkin.streak===0,`submitting day ${d} cannot add a streak day`); }
 ok((await rctx.request.post(B+'/api/progress/lesson',{data:{slug:'made-up'}})).status()===404,'invented lesson slug -> 404');
 ok((await rctx.request.post(B+'/api/challenges/made-up',{data:{answers:[0,0,0,0]}})).status()===404,'invented challenge slug -> 404');
 ok((await rctx.request.post(B+'/api/challenges/write-a-better-prompt',{data:{answers:[9,9,9,9]}})).status()===400,'out-of-range answers -> 400');
@@ -63,23 +63,29 @@ await signout(bp);
 const a2=await signin(pctx,aEmail); await a2.goto(B+LESSON,{waitUntil:'networkidle'}); await a2.waitForTimeout(800); ok((await a2.locator('text=✓ Completed').count())>0,'first account is still complete after signing back in');
 const dctx=await ctxOf(); const d2=await signin(dctx,aEmail); await d2.goto(B+LESSON,{waitUntil:'networkidle'}); await d2.waitForTimeout(800); ok((await d2.locator('text=✓ Completed').count())>0,'a different browser/device shows the server-completed lesson as complete');
 
-// guest ticks merge into the account once, then do not leak to the next account
-const gctx=await ctxOf(); const gp=await gctx.newPage(); await gp.goto(B+LESSON,{waitUntil:'networkidle'}); await gp.click('button:has-text("Mark as complete")'); await gp.waitForTimeout(400);
-ok((await gp.locator('button:has-text("undo")').count())===1,'guests can still tick and untick locally');
-const cp=await signup(gctx,'Account C',`c${stamp}@example.com`); await cp.waitForTimeout(1500); await cp.reload({waitUntil:'networkidle'});
-ok(/6/.test(await chip(cp)),'guest tick was merged into the new account (+1 check-in +5 lesson = 6): '+await chip(cp));
-await signout(cp); const dp=await signup(gctx,'Account D',`d${stamp}@example.com`); await dp.goto(B+LESSON,{waitUntil:'networkidle'}); await dp.waitForTimeout(800);
-ok((await dp.locator('button:has-text("Mark as complete")').count())===1,'the next account in that browser starts clean (guest ticks were cleared)');
+// lessons are for members: a signed-out visitor is sent to sign in and sees nothing of the lesson
+const gctx=await ctxOf(); const gr=await gctx.request.get(B+LESSON,{maxRedirects:0}); ok(gr.status()===307&&(gr.headers().location||'').includes('/login'),'signed-out lesson request is sent to sign in');
+ok(!(await gr.text()).includes('Mark as complete'),'no lesson content in the redirect response');
 
-// ===== 7. passing a challenge before signing up is not lost
-const ectx=await ctxOf(); const ep=await ectx.newPage(); await ep.goto(B+'/challenges/write-a-better-prompt',{waitUntil:'networkidle'});
-for (let i=0;i<4;i++){ await ep.locator('.opt').nth(1).click(); await ep.click(i<3?'button:has-text("Next")':'button:has-text("Check my answers")'); await ep.waitForTimeout(350); }
-await ep.waitForSelector('text=Solved'); ok((await ep.locator('text=Create account, earn the points').count())===1,'guest sees the sign-up offer after passing');
-await ep.click('text=Create account, earn the points'); await ep.waitForURL('**/signup**');
-await ep.fill('input[name=name]','Eve Earner'); await ep.fill('input[name=email]',`eve${stamp}@example.com`); await ep.fill('input[name=password]','secret12'); await ep.click('button:has-text("Create my account")');
-await ep.waitForURL('**/challenges/write-a-better-prompt',{timeout:15000}); await ep.waitForSelector('text=You earned 20 points',{timeout:10000});
-ok(true,'after sign-up the passed result is claimed automatically (not sent back to Question 1)');
-await ep.waitForTimeout(800); await ep.reload({waitUntil:'networkidle'}); ok(/21/.test(await chip(ep)),'account has 21 points (1 check-in + 20): '+await chip(ep));
+
+// ===== 7. challenges: members only, three tries a day, answers hidden until pass or the last try, streak only from today's puzzle
+const { challenges, dailyChallenge } = await import('../../src/lib/challenges.ts');
+const anonCh=await (await ctxOf()).request.post(B+'/api/challenges/write-a-better-prompt',{data:{answers:[1,1,1,1]}}); ok(anonCh.status()===401,'a signed-out visitor cannot submit a challenge (401)');
+const gate2=await (await ctxOf()).request.get(B+'/challenges',{maxRedirects:0}); ok(gate2.status()===307,'signed-out /challenges is sent to sign in');
+const ectx=await ctxOf(); await signup(ectx,'Eve Earner',`eve${stamp}@example.com`);
+const today=new Intl.DateTimeFormat('en-CA',{timeZone:'UTC'}).format(new Date());
+const daily=dailyChallenge(today); const other=challenges.find(c=>c.slug!==daily.slug);
+const wrongA=daily.questions.map(q=>(q.answer+1)%q.options.length), rightA=daily.questions.map(q=>q.answer);
+const post=(c,slug,answers)=>c.request.post(B+'/api/challenges/'+slug,{data:{answers}});
+let r1=await (await post(ectx,daily.slug,wrongA)).json(); ok(!r1.passed&&r1.attemptsLeft===2&&r1.results.length===0,'a miss shows no answers and counts the tries down');
+let r2=await (await post(ectx,daily.slug,wrongA)).json(); ok(r2.attemptsLeft===1&&r2.results.length===0,'second miss: still no answers');
+let r3=await (await post(ectx,daily.slug,wrongA)).json(); ok(r3.attemptsLeft===0&&r3.results.length===daily.questions.length,'third miss: answers are shown');
+ok((await post(ectx,daily.slug,rightA)).status()===429,'a fourth try the same day is refused (429)');
+const oth=await (await post(ectx,other.slug,other.questions.map(q=>q.answer))).json(); ok(oth.passed&&oth.gained===other.points&&oth.streakDay===false&&oth.streak===0,'an ordinary challenge pays points but does not start a streak');
+const fctx=await ctxOf(); await signup(fctx,'Fay Streak',`fay${stamp}@example.com`);
+const win=await (await post(fctx,daily.slug,rightA)).json(); ok(win.passed&&win.daily&&win.streakDay&&win.streak===1,"passing today's puzzle starts the streak (1)");
+const again=await (await post(fctx,daily.slug,rightA)).json(); ok(again.passed&&!again.streakDay&&again.streak===1&&again.gained===0,'passing it again the same day adds nothing');
+
 
 // ===== 8. account deletion
 const xctx=await ctxOf(); const xEmail=`x${stamp}@example.com`; await signup(xctx,'Xena Gone',xEmail);

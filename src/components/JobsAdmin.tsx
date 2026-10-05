@@ -17,6 +17,12 @@ type Draft = {
   posted: string;
   summary: string;
   about: string;
+  responsibilities: string;
+  requirements: string;
+  niceToHave: string;
+  benefits: string;
+  experience: string;
+  salary: string;
   skills: string;
   status: "open" | "closed";
 };
@@ -33,6 +39,12 @@ const blank = (): Draft => ({
   posted: today(),
   summary: "",
   about: "",
+  responsibilities: "",
+  requirements: "",
+  niceToHave: "",
+  benefits: "",
+  experience: "",
+  salary: "",
   skills: "",
   status: "open",
 });
@@ -48,6 +60,12 @@ const toDraft = (j: Job): Draft => ({
   posted: j.posted,
   summary: j.summary,
   about: j.about.join("\n\n"),
+  responsibilities: j.responsibilities.join("\n"),
+  requirements: j.requirements.join("\n"),
+  niceToHave: j.niceToHave.join("\n"),
+  benefits: j.benefits.join("\n"),
+  experience: j.experience ?? "",
+  salary: j.salary ?? "",
   skills: j.skills.join(", "),
   status: j.status,
 });
@@ -222,9 +240,35 @@ export function JobsAdmin({ initialJobs }: { initialJobs: Job[] }) {
           <input className="field" maxLength={300} value={draft.summary} onChange={set("summary")} />
         </label>
         <label className="grid gap-1 text-sm">
-          Description <span className="text-xs text-muted">(separate paragraphs with a blank line)</span>
-          <textarea className="field min-h-40" value={draft.about} onChange={set("about")} />
+          About the role <span className="text-xs text-muted">(2 to 3 short paragraphs, blank line between)</span>
+          <textarea className="field min-h-32" value={draft.about} onChange={set("about")} />
         </label>
+        <label className="grid gap-1 text-sm">
+          Responsibilities <span className="text-xs text-muted">(one per line)</span>
+          <textarea className="field min-h-32" value={draft.responsibilities} onChange={set("responsibilities")} />
+        </label>
+        <label className="grid gap-1 text-sm">
+          Requirements <span className="text-xs text-muted">(one per line)</span>
+          <textarea className="field min-h-32" value={draft.requirements} onChange={set("requirements")} />
+        </label>
+        <label className="grid gap-1 text-sm">
+          Nice to have <span className="text-xs text-muted">(one per line, optional)</span>
+          <textarea className="field min-h-20" value={draft.niceToHave} onChange={set("niceToHave")} />
+        </label>
+        <label className="grid gap-1 text-sm">
+          Benefits <span className="text-xs text-muted">(one per line, optional)</span>
+          <textarea className="field min-h-20" value={draft.benefits} onChange={set("benefits")} />
+        </label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="grid gap-1 text-sm">
+            Experience <span className="text-xs text-muted">(e.g. 8+ years, optional)</span>
+            <input className="field" maxLength={80} value={draft.experience} onChange={set("experience")} />
+          </label>
+          <label className="grid gap-1 text-sm">
+            Pay <span className="text-xs text-muted">(only if the employer shared it)</span>
+            <input className="field" maxLength={80} value={draft.salary} onChange={set("salary")} />
+          </label>
+        </div>
         <label className="grid gap-1 text-sm">
           Skills <span className="text-xs text-muted">(separate with commas)</span>
           <input className="field" value={draft.skills} onChange={set("skills")} />

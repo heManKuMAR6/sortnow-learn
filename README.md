@@ -11,7 +11,7 @@ An AI learning platform: short lessons, daily challenges, a streak and points, p
 The app runs with no setup in a labeled preview mode, but accounts there are temporary. To make it real:
 
 1. Create a free project at supabase.com.
-2. In the SQL editor, run `supabase/schema.sql` (safe to re-run).
+2. In the SQL editor, run `supabase/schema.sql` (safe to re-run). If your database was updated through the Supabase connector instead, also run `supabase/one-time-steps.sql` once (it holds the two statements the connector asks a person to confirm: the activity-log constraint and `delete_my_account`).
 3. In Vercel, add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Project Settings, API) and redeploy.
 4. Supabase, Authentication, URL Configuration: set Site URL to `https://sortnow-learn.vercel.app` and add `https://sortnow-learn.vercel.app/auth/callback` to Redirect URLs.
 5. Google and GitHub sign-in (optional): Supabase, Authentication, Providers. For Google create an OAuth client in Google Cloud Console; for GitHub create an OAuth App in GitHub Developer settings. Paste each client ID and secret into Supabase, and add the callback URL Supabase shows (`https://<project-ref>.supabase.co/auth/v1/callback`) to the Google client / GitHub app. Then set `NEXT_PUBLIC_AUTH_PROVIDERS=google,github` (only the ones you enabled) in Vercel; a button never shows until it is listed there. Email sign-up works without any of this.
@@ -29,6 +29,24 @@ Where things live:
 | Publish a reel drop | Append to `src/lib/ig-posts.ts`; link the reel to `/ig/<slug>` |
 | Add a challenge or lesson | Edit `src/lib/challenges.ts` or `src/lib/content.ts`, run `npm run gen:catalog`, then paste `supabase/schema.sql` into the Supabase SQL editor again. Points and grading live in the database and must be regenerated |
 | See leads, job applicants, newsletter signups | Supabase table editor: `leads`, `job_applications`, `newsletter_subscribers` |
+
+## Who sees what, and consent
+
+| Area | Who can open it |
+| --- | --- |
+| Home, `/privacy`, `/unsubscribe`, `/newsletter`, public profiles `/u/...`, sign-in pages | Anyone |
+| Reel drops `/ig/<slug>` | Only after name, email **and phone** plus the agreement box. The drop is absent from the HTML until then |
+| Notes (`/notes`, `/posts/...`, `/week`) | Members, or anyone who left name, email, phone and agreed |
+| Lessons, challenges, jobs, dashboard, settings, activity | Signed-in members only (sent to sign in, then straight back) |
+| `/admin`, `/admin/jobs`, CSV exports | Admins only (404 for everyone else) |
+
+Every form that collects details has an unticked agreement box. The server saves the exact words (with a version, `src/lib/consent.ts`) and the time next to the details. Leads and subscribers made before consent was collected are kept but flagged `consent = false` and are left out of the newsletter export. Each subscriber has an unsubscribe token; the link is `/unsubscribe?t=<token>` and the admin newsletter export includes it per row.
+
+`/admin` shows leads, subscribers, members and where people go (page views, time on page, scroll depth, referrers), with CSV exports. Activity is recorded for signed-in members and on reel drops, and the privacy notice says so. Newsletter *sending* is not built: export the list from `/admin` and send with a mail tool, using each row's unsubscribe link.
+
+## Streak rules
+
+Checking in gives +1 point once a day and does not move the streak. The streak moves only when you **pass today's featured challenge** (3 of 4). Each challenge allows 3 tries a day and its answers are shown only after a pass or the third try. Lessons and other challenges pay points once but do not count toward the streak.
 
 ## Run locally
 

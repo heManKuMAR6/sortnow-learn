@@ -1,9 +1,12 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { ConsentCheck } from "@/components/ConsentCheck";
+import { NEWSLETTER_CONSENT_TEXT } from "@/lib/consent";
 
 export function NewsletterInline({ signedIn }: { signedIn: boolean }) {
   const [email, setEmail] = useState("");
+  const [consent, setConsent] = useState(false);
   const [state, setState] = useState<"idle" | "pending" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -15,7 +18,7 @@ export function NewsletterInline({ signedIn }: { signedIn: boolean }) {
       const response = await fetch("/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(signedIn ? {} : { email }),
+        body: JSON.stringify(signedIn ? { consent } : { email, consent }),
       });
       const body = (await response.json()) as { error?: string };
       if (!response.ok) {
@@ -57,6 +60,9 @@ export function NewsletterInline({ signedIn }: { signedIn: boolean }) {
           aria-label="Email address"
         />
       )}
+      <div className="w-full">
+        <ConsentCheck checked={consent} onChange={setConsent} text={NEWSLETTER_CONSENT_TEXT} />
+      </div>
       <button type="submit" className="pill-teal" disabled={state === "pending"} data-track="newsletter-inline">
         {state === "pending" ? "One moment…" : signedIn ? "Send it to me" : "Subscribe free"}
       </button>

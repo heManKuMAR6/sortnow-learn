@@ -18,7 +18,8 @@ function classify(error: { code?: string; message?: string } | null, status: num
 }
 
 const TABLES: { table: string; probe: string }[] = [
-  { table: "profiles", probe: "id, handle, points, streak" },
+  { table: "profiles", probe: "id, handle, points, streak, last_checkin_day" },
+  { table: "challenge_attempts", probe: "user_id" },
   { table: "profile_private", probe: "user_id" },
   { table: "daily_activity", probe: "user_id" },
   { table: "awards", probe: "user_id" },
@@ -28,8 +29,9 @@ const TABLES: { table: string; probe: string }[] = [
   { table: "job_applications", probe: "id" },
   { table: "jobs", probe: "slug, status" },
   { table: "admins", probe: "user_id" },
-  { table: "newsletter_subscribers", probe: "id" },
-  { table: "leads", probe: "id" },
+  { table: "newsletter_subscribers", probe: "id, consent, unsub_token" },
+  { table: "leads", probe: "id, consent" },
+  { table: "events", probe: "id, session_id, seconds" },
   { table: "lesson_questions", probe: "id" },
 ];
 
@@ -40,6 +42,8 @@ const FUNCTIONS: { fn: string; args?: Record<string, unknown> }[] = [
   { fn: "set_timezone", args: { p_tz: "UTC" } },
   { fn: "delete_my_account" },
   { fn: "is_admin" },
+  { fn: "unsubscribe", args: { p_token: "x" } },
+  { fn: "admin_members" },
 ];
 
 const label: Record<State, string> = {

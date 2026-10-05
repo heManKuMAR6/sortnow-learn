@@ -27,7 +27,25 @@ export function parseJobInput(body: Record<string, unknown>): JobInput | string 
   if (summary === null) return "Summary can be up to 300 characters.";
   const aboutRaw = typeof body.about === "string" ? body.about.split(/\n\s*\n/) : Array.isArray(body.about) ? body.about : [];
   const about = aboutRaw.map((p) => (typeof p === "string" ? p.trim() : "")).filter(Boolean);
-  if (about.length > 12 || about.some((p) => p.length > 1500)) return "Keep the description to 12 paragraphs of 1500 characters.";
+  if (about.length > 12 || about.some((p) => p.length > 1500)) return "Keep the overview to 12 paragraphs of 1500 characters.";
+  const bullets = (v: unknown, maxItems: number, label: string): string[] | string => {
+    const raw = Array.isArray(v) ? v : typeof v === "string" ? v.split(/\r?\n/) : [];
+    const items = raw.map((x) => (typeof x === "string" ? x.replace(/^\s*[-*•]\s*/, "").trim() : "")).filter(Boolean);
+    if (items.length > maxItems || items.some((x) => x.length > 400)) return `${label}: up to ${maxItems} lines of 400 characters.`;
+    return items;
+  };
+  const responsibilities = bullets(body.responsibilities, 20, "Responsibilities");
+  if (typeof responsibilities === "string") return responsibilities;
+  const requirements = bullets(body.requirements, 20, "Requirements");
+  if (typeof requirements === "string") return requirements;
+  const niceToHave = bullets(body.niceToHave, 15, "Nice to have");
+  if (typeof niceToHave === "string") return niceToHave;
+  const benefits = bullets(body.benefits, 12, "Benefits");
+  if (typeof benefits === "string") return benefits;
+  const experience = text(body.experience ?? "", 80);
+  if (experience === null) return "Experience can be up to 80 characters.";
+  const salary = text(body.salary ?? "", 80);
+  if (salary === null) return "Pay can be up to 80 characters.";
   const skills = list(body.skills, 20, 60);
   if (!skills) return "Up to 20 skills, 60 characters each.";
   const posted = typeof body.posted === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.posted) ? body.posted : new Date().toISOString().slice(0, 10);
@@ -45,6 +63,12 @@ export function parseJobInput(body: Record<string, unknown>): JobInput | string 
     posted,
     summary,
     about,
+    responsibilities,
+    requirements,
+    niceToHave,
+    benefits,
+    ...(experience ? { experience } : {}),
+    ...(salary ? { salary } : {}),
     skills,
     ...(status ? { status } : {}),
   };

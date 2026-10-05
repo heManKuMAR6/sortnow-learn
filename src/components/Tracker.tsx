@@ -38,24 +38,83 @@ async function postEvent(body: EventInput) {
   }
 }
 
+const SESSION_KEY = "sn_session";
+const LAST_PATH_KEY = "sn_last_path";
+
+function sessionId(): string | null {
+  try {
+    let id = window.sessionStorage.getItem(SESSION_KEY);
+    if (!id) {
+      id = (crypto.randomUUID?.() ?? `${Date.now()}${Math.random()}`).replace(/-/g, "").slice(0, 32);
+      window.sessionStorage.setItem(SESSION_KEY, id);
+      return id;
+    }
+    return id;
+  } catch {
+    return null;
+  }
+}
+
+/** The id the lead form sends along, so a reel visit and the details left afterwards can be tied together. */
+export function currentSessionId(): string | null {
+  return typeof window === "undefined" ? null : sessionId();
+}
+
+/**
+ * Records where people go: every page view, scroll depth, clicks and time on page. It runs
+ * for signed-in members everywhere, and for anyone on a reel drop (/ig). The privacy notice
+ * says so, and the sign-up and lead forms ask for agreement first.
+ */
 export function Tracker({ signedIn }: { signedIn: boolean }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!signedIn) return;
+    if (!signedIn && !pathname.startsWith("/ig")) return;
 
     let maxDepth = 0;
     let highestSent = 0;
+    const sid = sessionId();
+    const startedAt = Date.now();
+    let dwellSent = false;
 
-    const send = (type: EventInput["type"], target: string | null, depth: number | null) => {
+    let previous: string | null = null;
+    try {
+      previous = window.sessionStorage.getItem(LAST_PATH_KEY);
+      window.sessionStorage.setItem(LAST_PATH_KEY, pathname);
+    } catch {
+      // ignore
+    }
+
+    const send = (
+      type: EventInput["type"],
+      target: string | null,
+      depth: number | null,
+      more: Pick<EventInput, "referrer" | "seconds"> = {},
+    ) => {
       void postEvent({
         type,
         path: pathname,
         target,
         depth,
         createdAt: new Date().toISOString(),
+        sessionId: sid,
+        ...more,
       });
     };
+
+    const sendDwell = () => {
+      if (dwellSent) return;
+      const seconds = Math.round((Date.now() - startedAt) / 1000);
+      if (seconds < 1) return;
+      dwellSent = true;
+      send("dwell", null, maxDepth, { seconds });
+    };
+
+    if (previous === null) {
+      // First page of this visit: note how they arrived.
+      send("session", null, null, { referrer: document.referrer ? document.referrer.slice(0, 300) : "direct" });
+    }
+    send("view", null, null, { referrer: previous ?? (document.referrer ? document.referrer.slice(0, 300) : "direct") });
 
     const noteDepth = (forceExact: boolean) => {
       const depth = scrollDepth();
@@ -80,7 +139,10 @@ export function Tracker({ signedIn }: { signedIn: boolean }) {
       send("click", targetOf(event.target), depth);
     };
     const onHide = () => {
-      if (document.visibilityState === "hidden") noteDepth(true);
+      if (document.visibilityState === "hidden") {
+        noteDepth(true);
+        sendDwell();
+      }
     };
 
     noteDepth(false);
@@ -92,6 +154,7 @@ export function Tracker({ signedIn }: { signedIn: boolean }) {
       window.removeEventListener("scroll", onScroll);
       document.removeEventListener("pointerup", onPointerUp);
       document.removeEventListener("visibilitychange", onHide);
+      sendDwell();
     };
   }, [pathname, signedIn]);
 

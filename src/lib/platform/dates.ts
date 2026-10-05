@@ -1,5 +1,5 @@
 // Day math for streaks. A "day" is a YYYY-MM-DD string in the visitor's own
-// calendar. These mirror the SQL in supabase/schema.sql (checkin()).
+// calendar. These mirror the SQL in supabase/schema.sql (checkin(), submit_challenge()).
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -47,17 +47,16 @@ export function resolveDay(clientDay: unknown, now = new Date()): string {
 
 export type StreakState = { streak: number; longest: number; lastActiveDay: string | null; points: number };
 
-export function applyCheckIn(state: StreakState, day: string): { next: StreakState; awarded: boolean } {
-  if (state.lastActiveDay && state.lastActiveDay >= day) return { next: state, awarded: false };
+/**
+ * A streak day is earned by passing the day's featured challenge, not by opening the
+ * site. (Checking in earns a point and nothing else.) Mirrors submit_challenge() in the SQL.
+ */
+export function applyStreakDay(state: StreakState, day: string): { next: StreakState; moved: boolean } {
+  if (state.lastActiveDay && state.lastActiveDay >= day) return { next: state, moved: false };
   const streak = state.lastActiveDay === shiftDay(day, -1) ? state.streak + 1 : 1;
   return {
-    awarded: true,
-    next: {
-      points: state.points + 1,
-      streak,
-      longest: Math.max(state.longest, streak),
-      lastActiveDay: day,
-    },
+    moved: true,
+    next: { ...state, streak, longest: Math.max(state.longest, streak), lastActiveDay: day },
   };
 }
 

@@ -9,6 +9,7 @@ import { loadJobs } from "@/lib/jobs-data";
 import { getStore } from "@/lib/platform/store";
 import { safely } from "@/lib/safe";
 import { getCurrentUser } from "@/lib/session";
+import { requireMember } from "@/lib/gate";
 
 export const metadata: Metadata = {
   title: "Jobs",
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
 };
 
 export default async function JobsPage() {
+  await requireMember("/jobs");
   const user = await getCurrentUser();
   const store = getStore();
   const [jobs, admin, applied] = await Promise.all([
