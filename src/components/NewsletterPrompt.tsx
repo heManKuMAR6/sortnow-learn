@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { AiIcon } from "@/components/AiIcon";
 
 const KEY = "sn_newsletter";
@@ -37,6 +37,8 @@ export function NewsletterPrompt({ signedIn }: { signedIn: boolean }) {
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const card = useRef<HTMLDivElement>(null);
+  const returnTo = useRef<Element | null>(null);
   const quiet = QUIET.some((p) => pathname.startsWith(p));
 
   useEffect(() => {
@@ -47,6 +49,23 @@ export function NewsletterPrompt({ signedIn }: { signedIn: boolean }) {
     const timer = window.setTimeout(() => setOpen(true), DELAY_MS);
     return () => window.clearTimeout(timer);
   }, [quiet]);
+
+  // Move focus into the dialog when it opens, close on Escape, and put focus back after.
+  useEffect(() => {
+    if (!open) return;
+    returnTo.current = document.activeElement;
+    const first = card.current?.querySelector<HTMLElement>("input, button");
+    first?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      if (returnTo.current instanceof HTMLElement) returnTo.current.focus();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function close() {
     setOpen(false);
@@ -89,6 +108,7 @@ export function NewsletterPrompt({ signedIn }: { signedIn: boolean }) {
           onClick={close}
         >
           <motion.div
+            ref={card}
             className="news-card glass"
             role="dialog"
             aria-modal="true"

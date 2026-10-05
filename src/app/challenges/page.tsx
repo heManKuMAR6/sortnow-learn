@@ -4,7 +4,7 @@ import { ChallengeCard } from "@/components/ChallengeCard";
 import { Reveal } from "@/components/Reveal";
 import { Stagger, StaggerItem } from "@/components/Stagger";
 import { challenges, dailyChallenge } from "@/lib/challenges";
-import { utcToday } from "@/lib/platform/dates";
+import { getCurrentProfile, todayFor } from "@/lib/current-profile";
 import { safely } from "@/lib/safe";
 import { getStore } from "@/lib/platform/store";
 import { getCurrentUser } from "@/lib/session";
@@ -19,7 +19,7 @@ export default async function ChallengesPage() {
   const done = user
     ? (await safely(getStore().completed(user.id), { challenges: {}, lessons: [] }, "challenges completed")).challenges
     : {};
-  const featured = dailyChallenge(utcToday());
+  const featured = dailyChallenge(todayFor(await getCurrentProfile(user)));
   const solved = challenges.filter((c) => done[c.slug]).length;
 
   return (

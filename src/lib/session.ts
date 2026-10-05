@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { cache } from "react";
-import { DEMO_COOKIE, parseDemoSession } from "@/lib/demo-session";
-import { isSupabaseConfigured } from "@/lib/env";
+import { DEMO_COOKIE } from "@/lib/demo-session";
+import { parseDemoSession } from "@/lib/demo-session-server";
+import { isDemoEnabled, isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
 export type AppUser = {
@@ -27,6 +28,7 @@ export const getCurrentUser = cache(async (): Promise<AppUser | null> => {
     };
   }
 
+  if (!isDemoEnabled()) return null;
   const jar = await cookies();
   const demo = parseDemoSession(jar.get(DEMO_COOKIE)?.value);
   if (!demo) return null;

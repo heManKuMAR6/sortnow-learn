@@ -1,6 +1,10 @@
 import { randomUUID } from "crypto";
 import { demoDoc, saveDemoDoc } from "@/lib/platform/demo-db";
-import { applyCheckIn } from "@/lib/platform/dates";
+import { deleteDemoUser } from "@/lib/demo-users";
+import { gradeAnswers, getChallenge } from "@/lib/challenges";
+import { getLessonBySlug } from "@/lib/content";
+import { applyCheckIn, todayIn } from "@/lib/platform/dates";
+import { LESSON_POINTS } from "@/lib/points";
 import { starterJobs, type Job } from "@/lib/jobs";
 import { HANDLE_RE, suggestHandle } from "@/lib/platform/handle";
 import type { Store } from "@/lib/platform/store";
@@ -81,10 +85,25 @@ export const demoStore: Store = {
     return this.updateProfile(id, { avatarUrl: url });
   },
 
-  async checkIn(id, day) {
+  async getTimezone(id) {
+    return (await demoDoc()).private[id]?.timezone ?? "UTC";
+  },
+
+  async setTimezone(id, tz) {
+    const doc = await demoDoc();
+    const cur = (doc.private[id] ??= { timezone: "UTC", tzChangedAt: null });
+    if (cur.timezone === tz) return cur.timezone;
+    if (cur.tzChangedAt !== null && Date.now() - cur.tzChangedAt < 7 * 86_400_000) return cur.timezone;
+    doc.private[id] = { timezone: tz, tzChangedAt: Date.now() };
+    await saveDemoDoc(doc);
+    return tz;
+  },
+
+  async checkIn(id) {
     const doc = await demoDoc();
     const p = doc.profiles[id];
     if (!p) throw new StoreError("No profile yet.", 404);
+    const day = todayIn(doc.private[id]?.timezone ?? "UTC");
     const { next, awarded } = applyCheckIn(
       { streak: p.streak, longest: p.longestStreak, lastActiveDay: p.lastActiveDay, points: p.points },
       day,
@@ -101,27 +120,56 @@ export const demoStore: Store = {
       days[day] = (days[day] ?? 0) + 1;
       await saveDemoDoc(doc);
     }
-    return { awarded, points: next.points, streak: next.streak, longest: next.longest };
+    return { awarded, points: next.points, streak: next.streak, longest: next.longest, day };
   },
 
-  async award(id, kind, ref, points, day, score) {
+  async completeLesson(id, slug) {
     const doc = await demoDoc();
     const p = doc.profiles[id];
     if (!p) throw new StoreError("No profile yet.", 404);
-    if (doc.awards.some((a) => a.userId === id && a.kind === kind && a.ref === ref)) {
-      return { awarded: false, points: p.points };
+    if (!getLessonBySlug(slug)) throw new StoreError("Unknown lesson.", 404);
+    if (doc.awards.some((a) => a.userId === id && a.kind === "lesson" && a.ref === slug)) {
+      return { awarded: false, points: p.points, gained: 0 };
     }
-    doc.awards.push({ userId: id, kind, ref, points, score: score?.score ?? null, total: score?.total ?? null, day });
-    doc.profiles[id] = {
-      ...p,
-      points: p.points + points,
-      challengesDone: p.challengesDone + (kind === "challenge" ? 1 : 0),
-      lessonsDone: p.lessonsDone + (kind === "lesson" ? 1 : 0),
-    };
+    const day = todayIn(doc.private[id]?.timezone ?? "UTC");
+    doc.awards.push({ userId: id, kind: "lesson", ref: slug, points: LESSON_POINTS, score: null, total: null, day });
+    doc.profiles[id] = { ...p, points: p.points + LESSON_POINTS, lessonsDone: p.lessonsDone + 1 };
     const days = (doc.activity[id] ??= {});
-    days[day] = (days[day] ?? 0) + points;
+    days[day] = (days[day] ?? 0) + LESSON_POINTS;
     await saveDemoDoc(doc);
-    return { awarded: true, points: p.points + points };
+    return { awarded: true, points: p.points + LESSON_POINTS, gained: LESSON_POINTS };
+  },
+
+  async submitChallenge(id, slug, answers) {
+    const doc = await demoDoc();
+    const p = doc.profiles[id];
+    if (!p) throw new StoreError("No profile yet.", 404);
+    const challenge = getChallenge(slug);
+    if (!challenge) throw new StoreError("Unknown challenge.", 404);
+    if (answers.length !== challenge.questions.length) throw new StoreError("Answer every question first.");
+    const g = gradeAnswers(challenge, answers);
+    if (!g.passed || doc.awards.some((a) => a.userId === id && a.kind === "challenge" && a.ref === slug)) {
+      return { ...g, awarded: false, gained: 0, points: p.points };
+    }
+    const day = todayIn(doc.private[id]?.timezone ?? "UTC");
+    doc.awards.push({ userId: id, kind: "challenge", ref: slug, points: challenge.points, score: g.score, total: g.total, day });
+    doc.profiles[id] = { ...p, points: p.points + challenge.points, challengesDone: p.challengesDone + 1 };
+    const days = (doc.activity[id] ??= {});
+    days[day] = (days[day] ?? 0) + challenge.points;
+    await saveDemoDoc(doc);
+    return { ...g, awarded: true, gained: challenge.points, points: p.points + challenge.points };
+  },
+
+  async deleteAccount(id) {
+    const doc = await demoDoc();
+    delete doc.profiles[id];
+    delete doc.activity[id];
+    delete doc.private[id];
+    doc.awards = doc.awards.filter((a) => a.userId !== id);
+    doc.portfolio = doc.portfolio.filter((i) => i.userId !== id);
+    doc.applications = doc.applications.filter((a) => a.userId !== id);
+    await saveDemoDoc(doc);
+    await deleteDemoUser(id);
   },
 
   async completed(id) {

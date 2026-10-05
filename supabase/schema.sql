@@ -208,8 +208,8 @@ grant insert on public.events to anon;
 --
 -- Integrity rule: a browser can edit its own profile text, but it can
 -- NEVER write points, streaks or counters. Those change only inside the
--- SECURITY DEFINER functions checkin() and award() below, enforced with
--- column-level grants.
+-- SECURITY DEFINER functions checkin(), complete_lesson() and submit_challenge()
+-- below, enforced with column-level grants.
 -- =====================================================================
 
 -- Profiles become public (the /u/<handle> page). Email is not stored here.
@@ -287,11 +287,95 @@ create policy "awards select own" on public.awards for select using (auth.uid() 
 revoke all on public.awards from anon, authenticated;
 grant select on public.awards to authenticated;
 
--- Daily check-in: +1 point and the streak moves. Once per calendar day.
--- p_day is the visitor's local date; it is accepted only within one day of
--- the server's UTC date, otherwise the server date is used.
-create or replace function public.checkin(p_day date)
-returns table (o_awarded boolean, o_points int, o_streak int, o_longest int)
+-- ---------------------------------------------------------------------
+-- Rewards. Only the functions below can change points, streaks or counters, and
+-- none of them trusts the caller:
+--   * checkin() takes NO date. The day comes from the server clock and the
+--     person's stored timezone, so a client cannot submit yesterday or tomorrow.
+--   * complete_lesson() pays only for lessons in award_catalog.
+--   * submit_challenge() grades the answers here, against challenge_answers, and
+--     pays only for challenges in award_catalog.
+-- award_catalog and challenge_answers are generated from the app's content files
+-- (scripts/gen-catalog-sql.mjs) and are unreadable by anon and authenticated.
+-- ---------------------------------------------------------------------
+
+drop function if exists public.checkin(date);
+drop function if exists public.award(text, text, int, date, int, int);
+
+create table if not exists public.profile_private (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  timezone text not null default 'UTC',
+  tz_changed_at timestamptz
+);
+alter table public.profile_private enable row level security;
+drop policy if exists "profile private select own" on public.profile_private;
+create policy "profile private select own" on public.profile_private for select using (auth.uid() = user_id);
+revoke all on public.profile_private from anon, authenticated;
+grant select on public.profile_private to authenticated;
+
+create table if not exists public.award_catalog (
+  kind text not null check (kind in ('lesson', 'challenge')),
+  ref text not null,
+  points int not null check (points between 1 and 50),
+  primary key (kind, ref)
+);
+create table if not exists public.challenge_answers (
+  slug text not null,
+  idx int not null,
+  answer int not null,
+  primary key (slug, idx)
+);
+alter table public.award_catalog enable row level security;
+alter table public.challenge_answers enable row level security;
+revoke all on public.award_catalog from anon, authenticated;
+revoke all on public.challenge_answers from anon, authenticated;
+
+-- The person's calendar day, from the server clock and their stored timezone.
+create or replace function public.local_day(p_uid uuid)
+returns date
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select (now() at time zone coalesce((select timezone from public.profile_private where user_id = p_uid), 'UTC'))::date;
+$$;
+revoke all on function public.local_day(uuid) from public, anon, authenticated;
+
+-- Sets the timezone. The first set is free; later changes are allowed once every
+-- 7 days, so switching timezones cannot be used to farm extra days.
+create or replace function public.set_timezone(p_tz text)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  uid uuid := auth.uid();
+  cur public.profile_private%rowtype;
+begin
+  if uid is null then
+    raise exception 'not signed in';
+  end if;
+  if p_tz is null or not exists (select 1 from pg_timezone_names where name = p_tz) then
+    raise exception 'bad timezone';
+  end if;
+  insert into public.profile_private (user_id) values (uid) on conflict do nothing;
+  select * into cur from public.profile_private where user_id = uid for update;
+  if cur.timezone = p_tz then
+    return cur.timezone;
+  end if;
+  if cur.tz_changed_at is not null and cur.tz_changed_at > now() - interval '7 days' then
+    return cur.timezone;
+  end if;
+  update public.profile_private set timezone = p_tz, tz_changed_at = now() where user_id = uid;
+  return p_tz;
+end;
+$$;
+
+-- Daily check-in: +1 point and the streak moves, once per local calendar day.
+create or replace function public.checkin()
+returns table (o_awarded boolean, o_points int, o_streak int, o_longest int, o_day date)
 language plpgsql
 security definer
 set search_path = public
@@ -299,21 +383,19 @@ as $$
 declare
   uid uuid := auth.uid();
   prof public.profiles%rowtype;
-  d date := p_day;
+  d date;
   next_streak int;
 begin
   if uid is null then
     raise exception 'not signed in';
   end if;
-  if d is null or abs(d - (now() at time zone 'utc')::date) > 1 then
-    d := (now() at time zone 'utc')::date;
-  end if;
+  d := public.local_day(uid);
   select * into prof from public.profiles where id = uid for update;
   if not found then
     raise exception 'no profile';
   end if;
   if prof.last_active_day is not null and prof.last_active_day >= d then
-    return query select false, prof.points, prof.streak, prof.longest_streak;
+    return query select false, prof.points, prof.streak, prof.longest_streak, d;
     return;
   end if;
   if prof.last_active_day = d - 1 then
@@ -329,61 +411,177 @@ begin
    where id = uid;
   insert into public.daily_activity (user_id, day, points) values (uid, d, 1)
   on conflict (user_id, day) do update set points = public.daily_activity.points + 1;
-  return query select true, prof.points + 1, next_streak, greatest(prof.longest_streak, next_streak);
+  return query select true, prof.points + 1, next_streak, greatest(prof.longest_streak, next_streak), d;
 end;
 $$;
 
--- Pays points for a challenge or lesson the first time only.
-create or replace function public.award(
-  p_kind text, p_ref text, p_points int, p_day date,
-  p_score int default null, p_total int default null
-)
-returns table (o_awarded boolean, o_points int)
+-- A lesson marked complete pays its catalog points once.
+create or replace function public.complete_lesson(p_slug text)
+returns table (o_awarded boolean, o_points int, o_gained int)
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
   uid uuid := auth.uid();
-  d date := p_day;
-  inserted int;
-  new_points int;
+  v_pts int;
+  v_new int;
+  v_rows int;
+  d date;
 begin
   if uid is null then
     raise exception 'not signed in';
   end if;
-  if p_kind not in ('challenge', 'lesson') or p_points < 1 or p_points > 50
-     or p_ref is null or char_length(p_ref) > 120 then
-    raise exception 'bad award';
+  select c.points into v_pts from public.award_catalog c where c.kind = 'lesson' and c.ref = p_slug;
+  if not found then
+    raise exception 'unknown lesson';
   end if;
-  if d is null or abs(d - (now() at time zone 'utc')::date) > 1 then
-    d := (now() at time zone 'utc')::date;
-  end if;
-  insert into public.awards (user_id, kind, ref, points, score, total, day)
-  values (uid, p_kind, p_ref, p_points, p_score, p_total, d)
+  d := public.local_day(uid);
+  insert into public.awards (user_id, kind, ref, points, day) values (uid, 'lesson', p_slug, v_pts, d)
   on conflict (user_id, kind, ref) do nothing;
-  get diagnostics inserted = row_count;
-  if inserted = 0 then
-    select p.points into new_points from public.profiles p where p.id = uid;
-    return query select false, coalesce(new_points, 0);
+  get diagnostics v_rows = row_count;
+  if v_rows = 0 then
+    select p.points into v_new from public.profiles p where p.id = uid;
+    return query select false, coalesce(v_new, 0), 0;
     return;
   end if;
   update public.profiles
-     set points = points + p_points,
-         challenges_done = challenges_done + (p_kind = 'challenge')::int,
-         lessons_done = lessons_done + (p_kind = 'lesson')::int
+     set points = points + v_pts, lessons_done = lessons_done + 1
    where id = uid
-   returning points into new_points;
-  insert into public.daily_activity (user_id, day, points) values (uid, d, p_points)
-  on conflict (user_id, day) do update set points = public.daily_activity.points + p_points;
-  return query select true, new_points;
+   returning points into v_new;
+  insert into public.daily_activity (user_id, day, points) values (uid, d, v_pts)
+  on conflict (user_id, day) do update set points = public.daily_activity.points + v_pts;
+  return query select true, v_new, v_pts;
 end;
 $$;
 
-revoke all on function public.checkin(date) from public, anon;
-revoke all on function public.award(text, text, int, date, int, int) from public, anon;
-grant execute on function public.checkin(date) to authenticated;
-grant execute on function public.award(text, text, int, date, int, int) to authenticated;
+-- Grades a challenge here, then pays its catalog points the first time it is passed
+-- (3 of 4, that is 60 percent). Returns the correct answers so the app can explain them.
+create or replace function public.submit_challenge(p_slug text, p_answers int[])
+returns table (o_score int, o_total int, o_passed boolean, o_awarded boolean, o_gained int, o_points int, o_correct int[])
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  uid uuid := auth.uid();
+  v_total int;
+  v_score int;
+  v_pts int;
+  v_new int;
+  v_rows int;
+  v_passed boolean;
+  v_correct int[];
+  d date;
+begin
+  if uid is null then
+    raise exception 'not signed in';
+  end if;
+  select c.points into v_pts from public.award_catalog c where c.kind = 'challenge' and c.ref = p_slug;
+  select count(*) into v_total from public.challenge_answers a where a.slug = p_slug;
+  if v_pts is null or v_total = 0 then
+    raise exception 'unknown challenge';
+  end if;
+  if coalesce(array_length(p_answers, 1), 0) <> v_total then
+    raise exception 'wrong number of answers';
+  end if;
+  select count(*) into v_score
+    from public.challenge_answers a
+   where a.slug = p_slug and p_answers[a.idx + 1] = a.answer;
+  v_correct := array(select a.answer from public.challenge_answers a where a.slug = p_slug order by a.idx);
+  v_passed := v_score::numeric / v_total >= 0.6;
+  select p.points into v_new from public.profiles p where p.id = uid;
+  if not v_passed then
+    return query select v_score, v_total, false, false, 0, coalesce(v_new, 0), v_correct;
+    return;
+  end if;
+  d := public.local_day(uid);
+  insert into public.awards (user_id, kind, ref, points, score, total, day)
+  values (uid, 'challenge', p_slug, v_pts, v_score, v_total, d)
+  on conflict (user_id, kind, ref) do nothing;
+  get diagnostics v_rows = row_count;
+  if v_rows = 0 then
+    return query select v_score, v_total, true, false, 0, coalesce(v_new, 0), v_correct;
+    return;
+  end if;
+  update public.profiles
+     set points = points + v_pts, challenges_done = challenges_done + 1
+   where id = uid
+   returning points into v_new;
+  insert into public.daily_activity (user_id, day, points) values (uid, d, v_pts)
+  on conflict (user_id, day) do update set points = public.daily_activity.points + v_pts;
+  return query select v_score, v_total, true, true, v_pts, v_new, v_correct;
+end;
+$$;
+
+-- Lets a person delete their own account. Their profile, portfolio, awards and
+-- applications go with it (on delete cascade).
+create or replace function public.delete_my_account()
+returns void
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'not signed in';
+  end if;
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+revoke all on function public.set_timezone(text) from public, anon;
+revoke all on function public.checkin() from public, anon;
+revoke all on function public.complete_lesson(text) from public, anon;
+revoke all on function public.submit_challenge(text, int[]) from public, anon;
+revoke all on function public.delete_my_account() from public, anon;
+grant execute on function public.set_timezone(text) to authenticated;
+grant execute on function public.checkin() to authenticated;
+grant execute on function public.complete_lesson(text) to authenticated;
+grant execute on function public.submit_challenge(text, int[]) to authenticated;
+grant execute on function public.delete_my_account() to authenticated;
+
+-- BEGIN GENERATED CATALOG (run: npm run gen:catalog; do not edit by hand)
+insert into public.award_catalog (kind, ref, points) values
+  ('lesson', 'what-a-neural-network-is', 5),
+  ('lesson', 'how-a-network-learns', 5),
+  ('lesson', 'large-language-models', 5),
+  ('lesson', 'what-generative-ai-is', 5),
+  ('challenge', 'spot-the-made-up-answer', 15),
+  ('challenge', 'write-a-better-prompt', 20),
+  ('challenge', 'pick-the-right-tool', 20),
+  ('challenge', 'whats-in-the-context', 15),
+  ('challenge', 'is-it-safe-to-paste', 20),
+  ('challenge', 'agent-or-not', 25)
+on conflict (kind, ref) do update set points = excluded.points;
+
+insert into public.challenge_answers (slug, idx, answer) values
+  ('spot-the-made-up-answer', 0, 1),
+  ('spot-the-made-up-answer', 1, 1),
+  ('spot-the-made-up-answer', 2, 2),
+  ('spot-the-made-up-answer', 3, 2),
+  ('write-a-better-prompt', 0, 1),
+  ('write-a-better-prompt', 1, 1),
+  ('write-a-better-prompt', 2, 1),
+  ('write-a-better-prompt', 3, 1),
+  ('pick-the-right-tool', 0, 1),
+  ('pick-the-right-tool', 1, 2),
+  ('pick-the-right-tool', 2, 0),
+  ('pick-the-right-tool', 3, 1),
+  ('whats-in-the-context', 0, 1),
+  ('whats-in-the-context', 1, 1),
+  ('whats-in-the-context', 2, 1),
+  ('whats-in-the-context', 3, 1),
+  ('is-it-safe-to-paste', 0, 2),
+  ('is-it-safe-to-paste', 1, 2),
+  ('is-it-safe-to-paste', 2, 1),
+  ('is-it-safe-to-paste', 3, 1),
+  ('agent-or-not', 0, 1),
+  ('agent-or-not', 1, 0),
+  ('agent-or-not', 2, 1),
+  ('agent-or-not', 3, 1)
+on conflict (slug, idx) do update set answer = excluded.answer;
+-- END GENERATED CATALOG
 
 -- Portfolio: public to read, owner writes.
 create table if not exists public.portfolio_items (
@@ -449,6 +647,8 @@ on conflict (id) do nothing;
 drop policy if exists "avatars insert own" on storage.objects;
 create policy "avatars insert own" on storage.objects for insert to authenticated
   with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+drop policy if exists "avatars read" on storage.objects;
+create policy "avatars read" on storage.objects for select using (bucket_id = 'avatars');
 drop policy if exists "avatars update own" on storage.objects;
 create policy "avatars update own" on storage.objects for update to authenticated
   using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);

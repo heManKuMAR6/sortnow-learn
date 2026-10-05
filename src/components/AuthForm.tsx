@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DEMO_STORAGE_KEY } from "@/lib/demo-session";
+import { safeNext } from "@/lib/safe-next";
 import { createClient } from "@/lib/supabase/client";
 
 function GoogleG() {
@@ -47,19 +48,40 @@ function friendly(message: string): string {
 export function AuthForm({
   mode,
   demoMode,
-  next = "/dashboard",
+  unavailable = false,
+  next: nextRaw = "/dashboard",
 }: {
   mode: "signin" | "signup";
   demoMode: boolean;
+  /** No Supabase and demo mode is off: there is nothing to sign in to. */
+  unavailable?: boolean;
   next?: string;
 }) {
   const router = useRouter();
+  const next = safeNext(nextRaw);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [canResend, setCanResend] = useState(false);
+
+  async function resend() {
+    setError(null);
+    try {
+      const supabase = createClient();
+      const { error: resendError } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+      });
+      if (resendError) setError(friendly(resendError.message));
+      else setNotice("Sent. Check your inbox (and spam) for the confirmation link.");
+    } catch (caught) {
+      setError(caught instanceof Error ? friendly(caught.message) : "Could not resend the email.");
+    }
+  }
 
   async function oauth(provider: "google" | "github") {
     setError(null);
@@ -125,11 +147,13 @@ export function AuthForm({
         }
         if (!data.session) {
           setNotice("Almost there. Check your email and tap the link to confirm, then you are in.");
+          setCanResend(true);
           return;
         }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) {
+          setCanResend(/not confirmed/i.test(signInError.message));
           setError(friendly(signInError.message));
           return;
         }
@@ -141,6 +165,10 @@ export function AuthForm({
     } finally {
       setPending(false);
     }
+  }
+
+  if (unavailable) {
+    return <p className="rounded-2xl bg-sun/30 p-4 text-sm">Sign-in is not set up on this site yet. Please check back soon.</p>;
   }
 
   return (
@@ -205,6 +233,16 @@ export function AuthForm({
           />
         </label>
         {error ? <p className="text-sm text-coral">{error}</p> : null}
+        {canResend ? (
+          <button type="button" className="text-link text-left text-sm" onClick={() => void resend()}>
+            Resend the confirmation email
+          </button>
+        ) : null}
+        {mode === "signin" && !demoMode ? (
+          <a href="/forgot-password" className="text-link text-sm" data-track="forgot-password">
+            Forgot your password?
+          </a>
+        ) : null}
         {notice ? <p className="rounded-2xl bg-mint/30 p-3 text-sm">{notice}</p> : null}
         <button
           type="submit"

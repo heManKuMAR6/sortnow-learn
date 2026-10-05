@@ -3,15 +3,18 @@ import { Inter, Outfit } from "next/font/google";
 import { Backdrop } from "@/components/Backdrop";
 import { DailyCheckIn } from "@/components/DailyCheckIn";
 import { NewsletterPrompt } from "@/components/NewsletterPrompt";
+import { ProgressProvider } from "@/components/ProgressProvider";
 import { ToastHost } from "@/components/ToastHost";
 import { PageEnter } from "@/components/PageEnter";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Tracker } from "@/components/Tracker";
-import { getCurrentProfile } from "@/lib/current-profile";
-import { isSupabaseConfigured } from "@/lib/env";
-import { liveStreak, utcToday } from "@/lib/platform/dates";
+import { getCurrentProfile, todayFor } from "@/lib/current-profile";
+import { isDemoEnabled } from "@/lib/env";
+import { liveStreak } from "@/lib/platform/dates";
+import { getStore } from "@/lib/platform/store";
+import { safely } from "@/lib/safe";
 import { getCurrentUser } from "@/lib/session";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -54,6 +57,7 @@ export default async function RootLayout({
 }>) {
   const user = await getCurrentUser();
   const profile = await getCurrentProfile(user);
+  const serverLessons = user ? (await safely(getStore().completed(user.id), { challenges: {}, lessons: [] }, "layout completed")).lessons : null;
 
   return (
     <html lang="en" className={`${outfit.variable} ${inter.variable}`}>
@@ -73,7 +77,7 @@ export default async function RootLayout({
                   avatarUrl: profile.avatarUrl,
                   mode: user.mode,
                   points: profile.points,
-                  streak: liveStreak(profile, utcToday()),
+                  streak: liveStreak(profile, todayFor(profile)),
                 }
               : null
           }
@@ -82,13 +86,15 @@ export default async function RootLayout({
         {user ? <DailyCheckIn userId={user.id} /> : null}
         <NewsletterPrompt signedIn={Boolean(user)} />
         <div className="page-scroll">
-          <Tracker signedIn={Boolean(user)} />
-          <PageEnter>
-            <main id="main" className="container-learn py-10">
-              {children}
-            </main>
-          </PageEnter>
-          <SiteFooter preview={!isSupabaseConfigured()} />
+          <ProgressProvider userId={user?.id ?? null} serverLessons={serverLessons}>
+            <Tracker signedIn={Boolean(user)} />
+            <PageEnter>
+              <main id="main" className="container-learn py-10">
+                {children}
+              </main>
+            </PageEnter>
+            <SiteFooter preview={isDemoEnabled()} />
+          </ProgressProvider>
         </div>
       </body>
     </html>

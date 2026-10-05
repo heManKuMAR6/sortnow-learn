@@ -79,3 +79,9 @@ export async function signInDemo(email: string, password: string): Promise<DemoU
   }
   return user;
 }
+
+export async function deleteDemoUser(id: string): Promise<void> {
+  const users = await readUsers();
+  const rest = users.filter((u) => u.id !== id);
+  if (rest.length !== users.length) await writeUsers(rest);
+}

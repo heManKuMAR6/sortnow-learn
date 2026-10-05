@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import { Avatar } from "@/components/Avatar";
+import { DeleteAccount } from "@/components/DeleteAccount";
 import type { PortfolioItem, Profile } from "@/lib/platform/types";
 import { toast } from "@/lib/toast";
 
@@ -250,6 +251,7 @@ export function SettingsForm({ profile, portfolio }: { profile: Profile; portfol
           </div>
         </form>
       </section>
+      <DeleteAccount />
     </div>
   );
 }

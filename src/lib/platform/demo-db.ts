@@ -17,13 +17,14 @@ export type DemoDoc = {
   subscribers: { email: string; name: string | null; source: string; createdAt: string }[];
   /** null until first use, then seeded from the starter listings. */
   jobs: Job[] | null;
+  private: Record<string, { timezone: string; tzChangedAt: number | null }>;
 };
 
 const filePath = path.join(process.cwd(), "data", "platform.json");
 const g = globalThis as unknown as { __snDemoDoc?: Promise<DemoDoc> };
 
 function empty(): DemoDoc {
-  return { profiles: {}, awards: [], activity: {}, portfolio: [], applications: [], subscribers: [], jobs: null };
+  return { profiles: {}, awards: [], activity: {}, portfolio: [], applications: [], subscribers: [], jobs: null, private: {} };
 }
 
 async function load(): Promise<DemoDoc> {
