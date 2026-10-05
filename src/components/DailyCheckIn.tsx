@@ -12,7 +12,7 @@ type CheckInResponse = {
 };
 
 /**
- * Once per local day per signed-in visitor: +1 point, the streak moves, a popup says so.
+ * Once per local day per signed-in visitor: +1 point and a popup. The streak does not move here: it moves when today's featured challenge is passed.
  * The browser sends only its timezone; the server decides the day. It re-checks when the
  * tab becomes visible again, on navigation, and every few minutes, so a page left open
  * across midnight still counts the new day.
@@ -59,8 +59,8 @@ export function DailyCheckIn({ userId }: { userId: string }) {
           const n = body.checkin.streak;
           toast({
             badge: "+1",
-            title: n > 1 ? `${n}-day streak` : "Day one. Streak started",
-            body: n > 1 ? "You showed up again. Keep it going." : "Come back tomorrow to grow it.",
+            title: "Checked in",
+            body: n > 0 ? `You are on a ${n}-day streak. Pass today's puzzle to keep it.` : "Pass today's featured challenge to start a streak.",
             icon: "flame",
             tone: "points",
           });

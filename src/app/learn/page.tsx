@@ -4,13 +4,15 @@ import { TrackProgress } from "@/components/ProgressUI";
 import { Reveal } from "@/components/Reveal";
 import { Stagger, StaggerItem } from "@/components/Stagger";
 import { lessonsFor, tracks } from "@/lib/content";
+import { requireMember } from "@/lib/gate";
 
 export const metadata: Metadata = {
   title: "Lessons",
   description: "Two short tracks: Beginner and Manager. Watch, read the key points, then ask.",
 };
 
-export default function LearnPage() {
+export default async function LearnPage() {
+  await requireMember("/learn");
   return (
     <div>
       <Reveal>

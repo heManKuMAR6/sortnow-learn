@@ -1,5 +1,7 @@
 "use client";
 
+import { ConsentCheck } from "@/components/ConsentCheck";
+import { NEWSLETTER_CONSENT_TEXT } from "@/lib/consent";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
@@ -34,6 +36,7 @@ export function NewsletterPrompt({ signedIn }: { signedIn: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const [consent, setConsent] = useState(false);
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +83,7 @@ export function NewsletterPrompt({ signedIn }: { signedIn: boolean }) {
       const response = await fetch("/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(signedIn ? {} : { email }),
+        body: JSON.stringify(signedIn ? { consent } : { email, consent }),
       });
       const body = (await response.json()) as { error?: string };
       if (!response.ok) {
@@ -155,6 +158,7 @@ export function NewsletterPrompt({ signedIn }: { signedIn: boolean }) {
                       />
                     </label>
                   )}
+                  <ConsentCheck checked={consent} onChange={setConsent} text={NEWSLETTER_CONSENT_TEXT} />
                   {error ? <p className="text-sm text-coral">{error}</p> : null}
                   <div className="flex flex-wrap gap-3">
                     <button type="submit" className="pill-teal" disabled={pending} data-track="newsletter-yes">

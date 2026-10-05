@@ -7,7 +7,7 @@ import { Reveal } from "@/components/Reveal";
 import { Stagger, StaggerItem } from "@/components/Stagger";
 import { getLesson, lessons, lessonsFor } from "@/lib/content";
 import { listLessonQuestions } from "@/lib/questions-store";
-import { getCurrentUser } from "@/lib/session";
+import { requireMember } from "@/lib/gate";
 
 type Params = { track: string; slug: string };
 
@@ -31,7 +31,7 @@ export default async function LessonPage({ params }: { params: Promise<Params> }
   const lesson = getLesson(track, slug);
   if (!lesson) notFound();
 
-  const user = await getCurrentUser();
+  const user = await requireMember(`/learn/${lesson.track}/${lesson.slug}`);
   const thread = await listLessonQuestions(lesson.slug);
   const siblings = lessonsFor(lesson.track);
   const position = siblings.findIndex((item) => item.slug === lesson.slug);

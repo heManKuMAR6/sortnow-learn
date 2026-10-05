@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { NotesGate } from "@/components/NotesGate";
+import { hasNotesAccess } from "@/lib/gate";
 import { PuzzleMark } from "@/components/PuzzleMark";
 import { weeklyNotesNewestFirst } from "@/lib/content";
 import { igPostsNewestFirst } from "@/lib/ig-posts";
@@ -10,7 +12,8 @@ export const metadata: Metadata = {
   description: "A short weekly note on AI, for beginners and for people who manage the work.",
 };
 
-export default function WeekPage() {
+export default async function WeekPage() {
+  if (!(await hasNotesAccess())) return <NotesGate next="/week" />;
   const [latest, ...older] = weeklyNotesNewestFirst();
   const currentReel = igPostsNewestFirst()[0];
 

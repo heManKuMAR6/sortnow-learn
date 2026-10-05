@@ -40,7 +40,11 @@ export interface Store {
   deletePortfolio(id: string, itemId: string): Promise<void>;
   applyToJob(id: string, jobSlug: string, note: string): Promise<{ created: boolean }>;
   appliedJobs(id: string): Promise<string[]>;
-  subscribe(email: string, name: string | null, source: string): Promise<void>;
+  /** `consentText` is the exact wording the person agreed to; no consent, no row. */
+  subscribe(email: string, name: string | null, source: string, consentText: string): Promise<void>;
+
+  /** One-click unsubscribe from the link in every email. True when a subscriber matched the token. */
+  unsubscribe(token: string): Promise<boolean>;
 
   /** Jobs board. Reads return open roles unless `includeClosed`; writes are for admins only. */
   isAdmin(user: { id: string; email: string }): Promise<boolean>;

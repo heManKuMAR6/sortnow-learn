@@ -14,7 +14,9 @@ export type DemoDoc = {
   activity: Record<string, Record<string, number>>;
   portfolio: (PortfolioItem & { userId: string })[];
   applications: { userId: string; jobSlug: string; note: string; createdAt: string }[];
-  subscribers: { email: string; name: string | null; source: string; createdAt: string }[];
+  subscribers: { email: string; name: string | null; source: string; createdAt: string; consentText?: string; unsubToken?: string; unsubscribedAt?: string | null }[];
+  /** Challenge tries per person, slug and day: "<id>|<slug>|<day>". */
+  attempts: Record<string, number>;
   /** null until first use, then seeded from the starter listings. */
   jobs: Job[] | null;
   private: Record<string, { timezone: string; tzChangedAt: number | null }>;
@@ -24,7 +26,7 @@ const filePath = path.join(process.cwd(), "data", "platform.json");
 const g = globalThis as unknown as { __snDemoDoc?: Promise<DemoDoc> };
 
 function empty(): DemoDoc {
-  return { profiles: {}, awards: [], activity: {}, portfolio: [], applications: [], subscribers: [], jobs: null, private: {} };
+  return { profiles: {}, awards: [], activity: {}, portfolio: [], applications: [], subscribers: [], attempts: {}, jobs: null, private: {} };
 }
 
 async function load(): Promise<DemoDoc> {

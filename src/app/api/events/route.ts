@@ -9,7 +9,7 @@ function asEvent(body: unknown): EventInput | null {
   if (!body || typeof body !== "object") return null;
   const row = body as Record<string, unknown>;
   const type = row.type;
-  if (type !== "scroll" && type !== "click" && type !== "view") return null;
+  if (type !== "scroll" && type !== "click" && type !== "view" && type !== "dwell" && type !== "session") return null;
   if (typeof row.path !== "string" || !row.path.startsWith("/") || row.path.length > 300) {
     return null;
   }
@@ -25,12 +25,18 @@ function asEvent(body: unknown): EventInput | null {
   } else if (row.depth !== null && row.depth !== undefined) {
     return null;
   }
+  const sessionId = typeof row.sessionId === "string" ? row.sessionId.slice(0, 64) : null;
+  const referrer = typeof row.referrer === "string" ? row.referrer.slice(0, 300) : null;
+  let seconds: number | null = null;
+  if (typeof row.seconds === "number" && Number.isFinite(row.seconds)) {
+    seconds = Math.max(0, Math.min(6 * 3600, Math.round(row.seconds)));
+  }
   let createdAt = new Date().toISOString();
   if (typeof row.createdAt === "string" && !Number.isNaN(Date.parse(row.createdAt))) {
     createdAt = new Date(row.createdAt).toISOString();
   }
   const eventType: EventType = type;
-  return { type: eventType, path: row.path, target, depth, createdAt };
+  return { type: eventType, path: row.path, target, depth, createdAt, sessionId, referrer, seconds };
 }
 
 export async function POST(request: Request) {
@@ -47,11 +53,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid event." }, { status: 400 });
   }
 
-  const igVisit =
-    event.path.startsWith("/ig") && (event.type === "view" || event.type === "scroll");
+  const igVisit = event.path.startsWith("/ig");
   if (!user && !igVisit) {
     return NextResponse.json({ error: "Sign in required." }, { status: 401 });
   }
+
+  const extra = {
+    session_id: event.sessionId ?? null,
+    referrer: event.referrer ?? null,
+    seconds: event.seconds ?? null,
+    user_agent: (request.headers.get("user-agent") ?? "").slice(0, 300) || null,
+  };
 
   if (user?.mode === "supabase") {
     const supabase = await createClient();
@@ -62,6 +74,7 @@ export async function POST(request: Request) {
       target: event.target,
       depth: event.depth,
       created_at: event.createdAt,
+      ...extra,
     });
     if (error) {
       return NextResponse.json({ error: "Could not save that." }, { status: 500 });
@@ -79,6 +92,7 @@ export async function POST(request: Request) {
         target: event.target,
         depth: event.depth,
         created_at: event.createdAt,
+        ...extra,
       });
       if (!error) return NextResponse.json({ ok: true });
     } catch {

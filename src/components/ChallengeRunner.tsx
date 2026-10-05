@@ -16,6 +16,10 @@ type Graded = {
   results: Result[];
   signedIn: boolean;
   worth: number;
+  streak: number;
+  streakDay: boolean;
+  attemptsLeft: number;
+  daily: boolean;
 };
 
 const KEYS = ["A", "B", "C", "D", "E"];
@@ -71,6 +75,20 @@ export function ChallengeRunner({
         } catch {
           // ignore
         }
+      }
+      if (body.streakDay) {
+        window.setTimeout(
+          () =>
+            toast({
+              badge: `${body.streak}`,
+              title: body.streak > 1 ? `${body.streak}-day streak` : "Streak started",
+              body: "You solved today's puzzle. That is what moves it.",
+              icon: "flame",
+              tone: "points",
+            }),
+          body.gained > 0 ? 900 : 0,
+        );
+        router.refresh();
       }
       if (body.gained > 0) {
         toast({
@@ -139,17 +157,28 @@ export function ChallengeRunner({
                   ? `You earned ${graded.gained} points.`
                   : "You already earned the points for this one. Replays are for fun."
                 : `You passed. Create a free account to earn ${graded.worth} points for it.`
-              : "You need 3 of 4 to pass. Read the notes below and try again."}
+              : graded.attemptsLeft > 0
+                ? `You need 3 of 4 to pass. ${graded.attemptsLeft} ${graded.attemptsLeft === 1 ? "try" : "tries"} left today. The answers stay hidden until you pass or use your last try.`
+                : "That was your last try today. The answers are below. Come back tomorrow."}
           </p>
+          {graded.passed && graded.streakDay ? (
+            <p className="mt-2 font-semibold text-teal">Streak day earned: {graded.streak}-day streak.</p>
+          ) : graded.passed && graded.daily ? (
+            <p className="mt-2 text-sm text-secondary">Today&apos;s streak day is already counted.</p>
+          ) : graded.passed ? (
+            <p className="mt-2 text-sm text-secondary">Your streak moves when you pass today&apos;s featured challenge.</p>
+          ) : null}
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             {!graded.signedIn && graded.passed ? (
               <Link href={`/signup?next=/challenges/${challenge.slug}`} className="pill-coral" data-track="challenge-signup">
                 Create account, earn the points
               </Link>
             ) : null}
-            <button type="button" className="pill-white" onClick={again} data-track="challenge-retry">
-              Try again
-            </button>
+            {graded.passed || graded.attemptsLeft > 0 ? (
+              <button type="button" className="pill-white" onClick={again} data-track="challenge-retry">
+                {graded.passed ? "Play again" : "Try again"}
+              </button>
+            ) : null}
             {nextHref ? (
               <Link href={nextHref} className="pill-teal" data-track="challenge-next">
                 Next: {nextTitle} →

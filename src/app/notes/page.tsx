@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { NotesGate } from "@/components/NotesGate";
+import { hasNotesAccess } from "@/lib/gate";
 import { Reveal } from "@/components/Reveal";
 import { Stagger, StaggerItem } from "@/components/Stagger";
 import { postsNewestFirst } from "@/lib/content";
@@ -10,7 +12,8 @@ export const metadata: Metadata = {
   description: "Short notes on the words, the measurements, and the questions that show up when people put models into real work.",
 };
 
-export default function NotesPage() {
+export default async function NotesPage() {
+  if (!(await hasNotesAccess())) return <NotesGate next="/notes" />;
   const posts = postsNewestFirst();
   return (
     <div>

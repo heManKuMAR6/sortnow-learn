@@ -26,6 +26,7 @@ export function SiteFooter({ preview = false }: { preview?: boolean }) {
           <a href="https://sortnow.co" data-track="footer-company" className="footer-link">sortnow.co</a>
           <a href="https://sortnow.co/contact" data-track="footer-contact" className="footer-link">Work with us</a>
           <a href="mailto:hello@sortnow.co" data-track="footer-email" className="footer-link">hello@sortnow.co</a>
+          <Link href="/privacy" data-track="footer-privacy" className="footer-link">Privacy notice</Link>
         </div>
       </div>
       <div className="container-learn border-t border-black/5 py-4 text-xs text-muted">

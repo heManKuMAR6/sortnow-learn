@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
-import { bad, fromError, readJson } from "@/lib/api";
-import { getChallenge, gradeAnswers } from "@/lib/challenges";
+import { bad, fromError, readJson, requireUser } from "@/lib/api";
+import { getChallenge } from "@/lib/challenges";
 import { getCurrentProfile } from "@/lib/current-profile";
 import { getStore } from "@/lib/platform/store";
-import { getCurrentUser } from "@/lib/session";
 
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const challenge = getChallenge(slug);
   if (!challenge) return bad("Unknown challenge.", 404);
+
+  // Challenges are for signed-in members: points and streaks are graded and paid inside the database.
+  const auth = await requireUser();
+  if ("response" in auth) return auth.response;
 
   const body = await readJson(request);
   const answers = body?.answers;
@@ -20,36 +23,32 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     return bad("Answer every question first.");
   }
 
-  // Anyone can play. Signed-in people are graded and paid inside the database, so the
-  // points can only come from correct answers to a real challenge. Guests get a result, no points.
-  const user = await getCurrentUser();
-  let graded: { score: number; total: number; passed: boolean; gained: number; points: number | null; correct: number[] };
   try {
-    if (user) {
-      if (!(await getCurrentProfile(user))) return bad("No profile yet.", 404);
-      const r = await getStore().submitChallenge(user.id, slug, answers as number[]);
-      graded = { score: r.score, total: r.total, passed: r.passed, gained: r.gained, points: r.points, correct: r.correct };
-    } else {
-      const g = gradeAnswers(challenge, answers as number[]);
-      graded = { ...g, gained: 0, points: null };
-    }
+    if (!(await getCurrentProfile(auth.user))) return bad("No profile yet.", 404);
+    const r = await getStore().submitChallenge(auth.user.id, slug, answers as number[]);
+    // The explanations travel only with the answers: after a pass, or after the last try.
+    const results = r.correct
+      ? challenge.questions.map((question, i) => ({
+          correct: answers[i] === r.correct?.[i],
+          answer: r.correct?.[i] as number,
+          why: question.why,
+        }))
+      : [];
+    return NextResponse.json({
+      score: r.score,
+      total: r.total,
+      passed: r.passed,
+      gained: r.gained,
+      points: r.points,
+      results,
+      worth: challenge.points,
+      streak: r.streak,
+      streakDay: r.streakDay,
+      attemptsLeft: r.attemptsLeft,
+      daily: r.daily,
+      signedIn: true,
+    });
   } catch (error) {
     return fromError(error);
   }
-
-  const results = challenge.questions.map((question, i) => ({
-    correct: answers[i] === graded.correct[i],
-    answer: graded.correct[i],
-    why: question.why,
-  }));
-  return NextResponse.json({
-    score: graded.score,
-    total: graded.total,
-    passed: graded.passed,
-    gained: graded.gained,
-    points: graded.points,
-    results,
-    signedIn: Boolean(user),
-    worth: challenge.points,
-  });
 }

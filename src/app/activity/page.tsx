@@ -3,6 +3,7 @@ import Link from "next/link";
 import { formatWhen } from "@/lib/format";
 import { localEventsFor } from "@/lib/events-store";
 import { getCurrentUser } from "@/lib/session";
+import { requireMember } from "@/lib/gate";
 import { createClient } from "@/lib/supabase/server";
 import type { StoredEvent } from "@/lib/event-types";
 
@@ -18,6 +19,7 @@ type Row = {
 };
 
 export default async function ActivityPage() {
+  await requireMember("/activity");
   const user = await getCurrentUser();
   if (!user) {
     return (

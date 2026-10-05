@@ -12,7 +12,7 @@ import {
 } from "@/lib/platform/types";
 
 const PROFILE_COLS =
-  "id, handle, display_name, headline, bio, skills, location, links, avatar_url, points, streak, longest_streak, last_active_day, challenges_done, lessons_done, created_at";
+  "id, handle, display_name, headline, bio, skills, location, links, avatar_url, points, streak, longest_streak, last_active_day, last_checkin_day, challenges_done, lessons_done, created_at";
 
 type ProfileRow = {
   id: string;
@@ -28,6 +28,7 @@ type ProfileRow = {
   streak: number;
   longest_streak: number;
   last_active_day: string | null;
+  last_checkin_day: string | null;
   challenges_done: number;
   lessons_done: number;
   created_at: string;
@@ -48,6 +49,7 @@ function toProfile(row: ProfileRow): Profile {
     streak: row.streak,
     longestStreak: row.longest_streak,
     lastActiveDay: row.last_active_day,
+    lastCheckinDay: row.last_checkin_day,
     challengesDone: row.challenges_done,
     lessonsDone: row.lessons_done,
     createdAt: row.created_at,
@@ -67,7 +69,8 @@ function toRow(patch: ProfilePatch) {
   return row;
 }
 
-const JOB_COLS = "slug, title, company, location, mode, level, type, posted, summary, about, skills, status";
+const JOB_COLS =
+  "slug, title, company, location, mode, level, type, posted, summary, about, responsibilities, requirements, nice_to_have, benefits, experience, salary, skills, status";
 
 type JobRow = {
   slug: string;
@@ -80,6 +83,12 @@ type JobRow = {
   posted: string;
   summary: string;
   about: string[];
+  responsibilities: string[];
+  requirements: string[];
+  nice_to_have: string[];
+  benefits: string[];
+  experience: string | null;
+  salary: string | null;
   skills: string[];
   status: Job["status"];
 };
@@ -96,6 +105,12 @@ function toJob(r: JobRow): Job {
     posted: r.posted,
     summary: r.summary,
     about: r.about,
+    responsibilities: r.responsibilities ?? [],
+    requirements: r.requirements ?? [],
+    niceToHave: r.nice_to_have ?? [],
+    benefits: r.benefits ?? [],
+    ...(r.experience ? { experience: r.experience } : {}),
+    ...(r.salary ? { salary: r.salary } : {}),
     skills: r.skills,
     status: r.status,
   };
@@ -106,6 +121,7 @@ function fail(error: { message: string; code?: string }): never {
   if (error.code === "23514") throw new StoreError("One of those values is not allowed.");
   if (/unknown (lesson|challenge)/i.test(error.message)) throw new StoreError("We do not recognise that.", 404);
   if (/wrong number of answers/i.test(error.message)) throw new StoreError("Answer every question first.");
+  if (/too many attempts/i.test(error.message)) throw new StoreError("That was your third try today. Come back tomorrow.", 429);
   // Keep the real reason in the server log; visitors get a calm message.
   console.error("[supabase-store]", error.code ?? "", error.message);
   throw new StoreError("Something went wrong on our side. Please try again in a bit.", 500);
@@ -223,7 +239,19 @@ export const supabaseStore: Store = {
     const { data, error } = await supabase.rpc("submit_challenge", { p_slug: slug, p_answers: answers });
     if (error) fail(error);
     const row = (Array.isArray(data) ? data[0] : data) as
-      | { o_score: number; o_total: number; o_passed: boolean; o_awarded: boolean; o_gained: number; o_points: number; o_correct: number[] }
+      | {
+          o_score: number;
+          o_total: number;
+          o_passed: boolean;
+          o_awarded: boolean;
+          o_gained: number;
+          o_points: number;
+          o_correct: number[] | null;
+          o_streak: number;
+          o_streak_day: boolean;
+          o_attempts_left: number;
+          o_daily: boolean;
+        }
       | undefined;
     if (!row) throw new StoreError("Could not grade that.", 500);
     return {
@@ -234,6 +262,10 @@ export const supabaseStore: Store = {
       gained: row.o_gained,
       points: row.o_points,
       correct: row.o_correct,
+      streak: row.o_streak,
+      streakDay: row.o_streak_day,
+      attemptsLeft: row.o_attempts_left,
+      daily: row.o_daily,
     };
   },
 
@@ -325,10 +357,19 @@ export const supabaseStore: Store = {
     return ((data ?? []) as { job_slug: string }[]).map((r) => r.job_slug);
   },
 
-  async subscribe(email, name, source) {
+  async subscribe(email, name, source, consentText) {
     const supabase = await db();
-    const { error } = await supabase.from("newsletter_subscribers").insert({ email, name, source });
+    const { error } = await supabase
+      .from("newsletter_subscribers")
+      .insert({ email, name, source, consent: true, consent_at: new Date().toISOString(), consent_text: consentText });
     if (error && error.code !== "23505") fail(error);
+  },
+
+  async unsubscribe(token) {
+    const supabase = await db();
+    const { data, error } = await supabase.rpc("unsubscribe", { p_token: token });
+    if (error) fail(error);
+    return data === true;
   },
 
   async isAdmin(user) {
@@ -369,6 +410,12 @@ export const supabaseStore: Store = {
       posted: input.posted,
       summary: input.summary,
       about: input.about,
+      responsibilities: input.responsibilities,
+      requirements: input.requirements,
+      nice_to_have: input.niceToHave,
+      benefits: input.benefits,
+      experience: input.experience ?? null,
+      salary: input.salary ?? null,
       skills: input.skills,
       ...(input.status ? { status: input.status } : {}),
     };
