@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { NEWSLETTER_CONSENT_TEXT, stamp } from "@/lib/consent";
+import { cleanPhone } from "@/lib/phone";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getStore } from "@/lib/platform/store";
 import { safeNext } from "@/lib/safe-next";
@@ -23,8 +24,10 @@ export async function GET(request: Request) {
           const raw = meta.full_name ?? meta.name;
           await getStore().subscribe(data.user.email.toLowerCase(), typeof raw === "string" ? raw.slice(0, 80) : null, "member", stamp(NEWSLETTER_CONSENT_TEXT));
         }
+        const phone = cleanPhone(meta?.phone);
+        if (phone) await getStore().setPhone(data.user?.id ?? "", phone);
       } catch {
-        // Never block sign-in on the newsletter.
+        // Never block sign-in on the newsletter or the optional phone.
       }
       return NextResponse.redirect(new URL(next, url.origin));
     }

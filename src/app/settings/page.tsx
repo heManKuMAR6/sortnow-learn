@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { PhoneField } from "@/components/PhoneField";
 import { SettingsForm } from "@/components/SettingsForm";
 import { SetupNotice } from "@/components/SetupNotice";
 import { getCurrentProfile } from "@/lib/current-profile";
@@ -16,6 +17,7 @@ export default async function SettingsPage() {
   const profile = await getCurrentProfile(user);
   if (!profile) return <SetupNotice />;
   const portfolio = await safely(getStore().portfolio(user.id), [], "settings portfolio");
+  const phone = await safely(getStore().getPhone(user.id), null as string | null, "settings phone");
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -29,6 +31,7 @@ export default async function SettingsPage() {
           View my profile
         </Link>
       </p>
+      <PhoneField initial={phone} />
       <SettingsForm profile={profile} portfolio={portfolio} />
     </div>
   );

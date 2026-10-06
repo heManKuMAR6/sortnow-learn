@@ -170,6 +170,18 @@ r = (await as(X, `select * from submit_challenge($1,$2)`, [daily, bad3])).rows[0
 ok(Array.isArray(r.o_correct) && r.o_attempts_left===0, 'third miss: answers revealed, no tries left');
 await fails('a fourth try the same day', as(X, `select * from submit_challenge($1,$2)`, [daily, gd]));
 
+// ---- member phone: optional, validated, private
+await fails('anon cannot set a phone', anonQ(`select set_phone('+1 214 555 0100')`));
+await fails('a junk phone is refused', as(U, `select set_phone('abc')`));
+await fails('a too-short phone is refused', as(U, `select set_phone('12345')`));
+ok((await as(U, `select set_phone('+1 214 555 0100') p`)).rows[0].p==='+1 214 555 0100', 'a member can save a phone');
+ok((await as(U, `select phone from profile_private where user_id=$1`,[U])).rows[0].phone==='+1 214 555 0100', 'and read it back');
+ok((await as(V, `select phone from profile_private`)).rows.every(x=>x.phone===null), "another member cannot read it");
+ok((await as(A, `select phone from profile_private where phone is not null`)).rows.length===1, 'an admin can read members phones');
+ok((await as(U, `select set_phone('   ') p`)).rows[0].p===null && (await as(U, `select phone from profile_private where user_id=$1`,[U])).rows[0].phone===null, 'a blank value clears it (the phone is optional)');
+await fails('a member cannot write the table directly', as(U, `update profile_private set phone='9999999999' where user_id=$1`,[U]));
+ok((await anonQ(`select count(*)::int c from information_schema.columns where table_name='profiles' and column_name='phone'`)).rows[0].c===0, 'the phone is not a column of the public profile');
+
 // ---- newsletter issues: admins only
 await fails('anon cannot read issues', anonQ(`select * from newsletter_issues`));
 await fails('a member cannot create an issue', as(U, `insert into newsletter_issues(subject,body) values ('hi','there')`));

@@ -20,7 +20,7 @@ export type DemoDoc = {
   attempts: Record<string, number>;
   /** null until first use, then seeded from the starter listings. */
   jobs: Job[] | null;
-  private: Record<string, { timezone: string; tzChangedAt: number | null }>;
+  private: Record<string, { timezone: string; tzChangedAt: number | null; phone?: string | null }>;
 };
 
 const filePath = path.join(process.cwd(), "data", "platform.json");

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { isBot, tooMany } from "@/lib/abuse";
 import { SRC_RE } from "@/lib/campaign";
+import { cleanPhone } from "@/lib/phone";
 import { LEAD_CONSENT_TEXT, stamp } from "@/lib/consent";
 import { isSupabaseConfigured } from "@/lib/env";
 import { LEAD_COOKIE, leadCookieOptions, leadCookieValue } from "@/lib/lead-cookie";
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
   if (!phone) {
     return NextResponse.json({ error: "Add your phone number to unlock this." }, { status: 400 });
   }
-  if (phone && (!/^[0-9+()\-.\s]{7,40}$/.test(phone) || phone.replace(/\D/g, "").length < 7)) {
+  if (phone && cleanPhone(phone) === undefined) {
     return NextResponse.json({ error: "That phone number doesn't look right. Use digits and an optional +." }, { status: 400 });
   }
 

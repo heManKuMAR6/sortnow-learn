@@ -119,8 +119,8 @@ export default async function AdminPage() {
       <section className="glass mt-6 p-5">
         <h2 className="text-2xl">Members</h2>
         <Table
-          head={["Joined", "Name", "Email", "Points", "Streak", "Last sign-in"]}
-          rows={data.members.slice(0, 200).map((m) => [when(m.created_at), m.display_name, m.email, m.points, m.streak, when(m.last_sign_in_at)])}
+          head={["Joined", "Name", "Email", "Phone", "Points", "Streak", "Last sign-in"]}
+          rows={data.members.slice(0, 200).map((m) => [when(m.created_at), m.display_name, m.email, m.phone ?? "", m.points, m.streak, when(m.last_sign_in_at)])}
           empty="No members yet."
         />
       </section>

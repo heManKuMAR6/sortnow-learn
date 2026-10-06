@@ -90,6 +90,28 @@ ok(!JSON.parse(readFileSync('data/leads.json', 'utf8')).some((l) => l.email === 
 let limited = 0; for (let i = 0; i < 20; i++) { const r = await anon.request.post(B + '/api/leads', { headers: { 'X-Forwarded-For': '198.51.100.7' }, data: { name: 'S', email: 'spam@example.com', consent: false, path: '/notes' } }); if (r.status() === 429) limited++; }
 ok(limited >= 4, `rapid repeats from one address are slowed down (${limited} of 20 refused with 429)`);
 
+// member phone: optional, private, can be removed
+ok((await anon.request.patch(B + '/api/profile/phone', { data: { phone: '+1 214 555 0100' } })).status() === 401, 'a signed-out visitor cannot set a phone (401)');
+ok((await mem.request.patch(B + '/api/profile/phone', { data: { phone: 'abc' } })).status() === 400, 'a junk phone is refused (400)');
+ok((await mem.request.patch(B + '/api/profile/phone', { data: { phone: '12345' } })).status() === 400, 'a too-short phone is refused (400)');
+ok((await mem.request.patch(B + '/api/profile/phone', { data: { phone: '+1 214 555 0188' } })).status() === 200, 'a member can save an optional phone');
+const settingsHtml = await (await mem.request.get(B + '/settings')).text();
+ok(settingsHtml.includes('+1 214 555 0188') && settingsHtml.includes('Phone number'), 'it shows in their own settings');
+const handle = (settingsHtml.match(/\/u\/([a-z0-9-]+)/) || [])[1];
+const pub = await (await anon.request.get(B + '/u/' + handle)).text();
+ok(!pub.includes('555 0188') && !pub.includes('0188'), 'the phone is never on the public profile');
+ok((await mem.request.patch(B + '/api/profile/phone', { data: { phone: '   ' } })).status() === 200 && !(await (await mem.request.get(B + '/settings')).text()).includes('+1 214 555 0188'), 'a blank value removes it');
+// sign-up works with no phone (it is optional) and with one
+const withPhone = await b.newContext(); const wp = await withPhone.newPage();
+await wp.goto(B + '/signup', { waitUntil: 'networkidle' });
+ok((await wp.locator('text=(optional)').count()) >= 1 && !(await wp.locator('input[name=phone]').getAttribute('required')), 'the sign-up phone field is marked optional and is not required');
+await wp.fill('input[name=name]', 'Pia Phone'); await wp.fill('input[name=email]', `pia${stamp}@example.com`); await wp.fill('input[name=phone]', 'nope'); await wp.fill('input[name=password]', 'secret12'); await wp.check('input[type=checkbox] >> nth=0');
+await wp.click('button:has-text("Create my account")'); await wp.waitForTimeout(600);
+ok(!wp.url().includes('/dashboard'), 'a bad phone at sign-up is flagged instead of silently dropped');
+await wp.fill('input[name=phone]', '+1 972 555 0144'); await wp.click('button:has-text("Create my account")'); await wp.waitForURL('**/dashboard');
+await wp.waitForTimeout(800);
+ok((await (await withPhone.request.get(B + '/settings')).text()).includes('+1 972 555 0144'), 'a phone given at sign-up is saved to the account');
+
 // newsletter sending (needs the app started with RESEND_API_KEY, NEWSLETTER_FROM and RESEND_API_URL=http://localhost:4010)
 const got = []; let failNext = 0;
 const mock = http.createServer((req, res) => { let d = ''; req.on('data', (c) => (d += c)); req.on('end', () => {
