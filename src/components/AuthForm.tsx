@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CONSENT_VERSION, SIGNUP_CONSENT_TEXT } from "@/lib/consent";
 import { DEMO_STORAGE_KEY } from "@/lib/demo-session";
+import { cleanPhone } from "@/lib/phone";
 import { safeNext } from "@/lib/safe-next";
 import { createClient } from "@/lib/supabase/client";
 
@@ -67,6 +68,7 @@ export function AuthForm({
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [canResend, setCanResend] = useState(false);
+  const [phone, setPhone] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [newsletter, setNewsletter] = useState(false);
 
@@ -84,6 +86,16 @@ export function AuthForm({
     } catch (caught) {
       setError(caught instanceof Error ? friendly(caught.message) : "Could not resend the email.");
     }
+  }
+
+  /** Optional phone given at sign-up; saved privately once there is a session. Failure never blocks sign-up. */
+  async function savePhone() {
+    if (!cleanPhone(phone)) return;
+    await fetch("/api/profile/phone", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone }),
+    }).catch(() => undefined);
   }
 
   async function oauth(provider: "google" | "github") {
@@ -112,6 +124,10 @@ export function AuthForm({
       setError("Please tick the box to agree first.");
       return;
     }
+    if (mode === "signup" && cleanPhone(phone) === undefined) {
+      setError("That phone number does not look right. Leave it blank if you would rather not share one.");
+      return;
+    }
     setPending(true);
     try {
       if (demoMode) {
@@ -137,6 +153,7 @@ export function AuthForm({
           DEMO_STORAGE_KEY,
           JSON.stringify({ id: body.user.id, email: body.user.email }),
         );
+        if (mode === "signup") await savePhone();
         router.push(next);
         router.refresh();
         return;
@@ -153,6 +170,7 @@ export function AuthForm({
               consent_at: new Date().toISOString(),
               consent_version: CONSENT_VERSION,
               newsletter_opt_in: newsletter,
+              ...(cleanPhone(phone) ? { phone: cleanPhone(phone) } : {}),
             },
             emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
           },
@@ -168,6 +186,7 @@ export function AuthForm({
             // ignore
           }
         }
+        if (data.session) await savePhone();
         if (data.session && newsletter) {
           await fetch("/api/newsletter", {
             method: "POST",
@@ -270,6 +289,23 @@ export function AuthForm({
             className="field"
           />
         </label>
+        {mode === "signup" ? (
+          <label className="grid gap-1 text-sm">
+            <span>
+              Phone <span className="text-muted">(optional)</span>
+            </span>
+            <input
+              type="tel"
+              name="phone"
+              autoComplete="tel"
+              placeholder="+1 214 555 0100"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="field"
+            />
+            <span className="text-xs text-muted">Private. Only sortNow sees it, to reach you about roles you ask about.</span>
+          </label>
+        ) : null}
         <label className="grid gap-1 text-sm">
           Password
           <input

@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 const rows: [string, string, string][] = [
   ["Name, email, phone", "When you unlock a reel drop or the notes.", "To give you the content, contact you about it, and send the weekly newsletter (you agreed on the form)."],
   ["Name, email, password", "When you create an account.", "To run your account. Passwords are hashed by our sign-in provider; we never see them."],
+  ["Phone number (members, optional)", "Only if you add one at sign-up or in Settings.", "So sortNow can reach you about roles you ask about. It is private and never shown on your profile. Remove it any time in Settings."],
   ["Profile details", "Only what you choose to add: photo, headline, bio, skills, links, portfolio.", "To show your public profile at /u/your-handle. Your email is never shown."],
   ["Points, streak, completed lessons and challenges", "As you use the site.", "To show your progress and rank you fairly."],
   ["Activity: pages viewed, clicks, scroll depth, time on a page, where you came from, browser type", "Only while you are signed in to an account. Nothing is recorded about visitors who have not signed in.", "To improve the lessons and notes and to show your own progress."],

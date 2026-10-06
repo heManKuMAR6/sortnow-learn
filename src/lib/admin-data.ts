@@ -34,6 +34,7 @@ export type MemberRow = {
   streak: number;
   created_at: string;
   last_sign_in_at: string | null;
+  phone?: string | null;
 };
 export type EventRow = {
   user_id: string | null;
@@ -70,18 +71,22 @@ export async function loadAdminData(): Promise<AdminData> {
     return out;
   }
   const supabase = await createClient();
-  const [leads, subs, members, events] = await Promise.all([
+  const [leads, subs, members, events, privateRows] = await Promise.all([
     supabase.from("leads").select("name, email, phone, source, path, campaign, consent, consent_at, unsubscribed_at, created_at").order("created_at", { ascending: false }).limit(2000),
     supabase.from("newsletter_subscribers").select("email, name, source, consent, consent_at, unsub_token, unsubscribed_at, created_at").order("created_at", { ascending: false }).limit(2000),
     supabase.rpc("admin_members"),
     supabase.from("events").select("user_id, type, path, session_id, referrer, seconds, depth, created_at").order("created_at", { ascending: false }).limit(EVENT_LIMIT),
+    supabase.from("profile_private").select("user_id, phone").not("phone", "is", null),
   ]);
   if (leads.error) out.errors.push(`leads: ${leads.error.message}`);
   else out.leads = (leads.data ?? []) as LeadRow[];
   if (subs.error) out.errors.push(`subscribers: ${subs.error.message}`);
   else out.subscribers = (subs.data ?? []) as SubscriberRow[];
   if (members.error) out.errors.push(`members: ${members.error.message}`);
-  else out.members = (members.data ?? []) as MemberRow[];
+  else {
+    const phones = new Map(((privateRows.data ?? []) as { user_id: string; phone: string | null }[]).map((r) => [r.user_id, r.phone]));
+    out.members = ((members.data ?? []) as MemberRow[]).map((m) => ({ ...m, phone: phones.get(m.id) ?? null }));
+  }
   if (events.error) out.errors.push(`events: ${events.error.message}`);
   else out.events = (events.data ?? []) as EventRow[];
   return out;

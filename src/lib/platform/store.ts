@@ -32,6 +32,9 @@ export interface Store {
   getTimezone(id: string): Promise<string>;
   /** Returns the timezone now in effect (a recent change is refused and the old one kept). */
   setTimezone(id: string, tz: string): Promise<string>;
+  /** Optional, private phone number of a member (blank clears it). */
+  getPhone(id: string): Promise<string | null>;
+  setPhone(id: string, phone: string | null): Promise<string | null>;
   checkIn(id: string): Promise<CheckInResult>;
   completeLesson(id: string, slug: string): Promise<LessonResult>;
   submitChallenge(id: string, slug: string, answers: number[]): Promise<ChallengeResult>;

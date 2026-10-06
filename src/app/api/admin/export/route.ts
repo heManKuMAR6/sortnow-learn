@@ -29,7 +29,7 @@ export async function GET(request: Request) {
       break;
     }
     case "members":
-      csv = toCsv(data.members, ["email", "display_name", "handle", "points", "streak", "created_at", "last_sign_in_at"]);
+      csv = toCsv(data.members, ["email", "display_name", "handle", "phone", "points", "streak", "created_at", "last_sign_in_at"]);
       break;
     case "events":
       csv = toCsv(data.events, ["created_at", "user_id", "session_id", "type", "path", "referrer", "seconds", "depth"]);

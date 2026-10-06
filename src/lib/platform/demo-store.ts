@@ -107,9 +107,21 @@ export const demoStore: Store = {
     const cur = (doc.private[id] ??= { timezone: "UTC", tzChangedAt: null });
     if (cur.timezone === tz) return cur.timezone;
     if (cur.tzChangedAt !== null && Date.now() - cur.tzChangedAt < 7 * 86_400_000) return cur.timezone;
-    doc.private[id] = { timezone: tz, tzChangedAt: Date.now() };
+    doc.private[id] = { ...doc.private[id], timezone: tz, tzChangedAt: Date.now() };
     await saveDemoDoc(doc);
     return tz;
+  },
+
+  async getPhone(id) {
+    return (await demoDoc()).private[id]?.phone ?? null;
+  },
+
+  async setPhone(id, phone) {
+    const doc = await demoDoc();
+    const cur = doc.private[id] ?? { timezone: "UTC", tzChangedAt: null };
+    doc.private[id] = { ...cur, phone };
+    await saveDemoDoc(doc);
+    return phone;
   },
 
   async checkIn(id) {

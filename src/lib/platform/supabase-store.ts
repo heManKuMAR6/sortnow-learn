@@ -123,6 +123,7 @@ function fail(error: { message: string; code?: string }): never {
   if (error.code === "23514") throw new StoreError("One of those values is not allowed.");
   if (/unknown (lesson|challenge)/i.test(error.message)) throw new StoreError("We do not recognise that.", 404);
   if (/wrong number of answers/i.test(error.message)) throw new StoreError("Answer every question first.");
+  if (/bad phone/i.test(error.message)) throw new StoreError("That phone number does not look right.");
   if (/too many attempts/i.test(error.message)) throw new StoreError("That was your third try today. Come back tomorrow.", 429);
   // Keep the real reason in the server log; visitors get a calm message.
   console.error("[supabase-store]", error.code ?? "", error.message);
@@ -236,6 +237,23 @@ export const supabaseStore: Store = {
     const { data, error } = await supabase.rpc("set_timezone", { p_tz: tz });
     if (error) fail(error);
     return typeof data === "string" ? data : "UTC";
+  },
+
+  async getPhone(id) {
+    const supabase = await db();
+    const { data, error } = await supabase.from("profile_private").select("phone").eq("user_id", id).maybeSingle();
+    if (error) fail(error);
+    return (data as { phone: string | null } | null)?.phone ?? null;
+  },
+
+  async setPhone(_id, phone) {
+    const supabase = await db();
+    const { data, error } = await supabase.rpc("set_phone", { p_phone: phone ?? "" });
+    if (error) {
+      if (/bad phone/i.test(error.message)) throw new StoreError("That phone number does not look right.");
+      fail(error);
+    }
+    return typeof data === "string" ? data : null;
   },
 
   async checkIn() {

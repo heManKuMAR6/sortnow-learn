@@ -927,6 +927,37 @@ alter table public.jobs add constraint jobs_list_sizes
   check (cardinality(responsibilities) <= 20 and cardinality(requirements) <= 20
      and cardinality(nice_to_have) <= 15 and cardinality(benefits) <= 12);
 
+-- ---- Optional phone number for members (private: only they and admins can read it) ----
+alter table public.profile_private
+  add column if not exists phone text check (phone is null or (char_length(phone) between 7 and 40 and phone ~ '^[0-9+()\-.\s]+$'));
+
+create or replace function public.set_phone(p_phone text)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  uid uuid := auth.uid();
+  clean text := nullif(btrim(coalesce(p_phone, '')), '');
+begin
+  if uid is null then
+    raise exception 'not signed in';
+  end if;
+  if clean is not null and (clean !~ '^[0-9+()\-.\s]{7,40}$' or length(regexp_replace(clean, '\D', '', 'g')) < 7) then
+    raise exception 'bad phone';
+  end if;
+  insert into public.profile_private (user_id, phone) values (uid, clean)
+  on conflict (user_id) do update set phone = excluded.phone;
+  return clean;
+end;
+$$;
+revoke all on function public.set_phone(text) from public, anon;
+grant execute on function public.set_phone(text) to authenticated;
+
+drop policy if exists "profile private admin read" on public.profile_private;
+create policy "profile private admin read" on public.profile_private for select to authenticated using (public.is_admin());
+
 -- ---- Newsletter: issues you write in /admin/newsletter, and who each was sent to ----
 create table if not exists public.newsletter_issues (
   id uuid primary key default gen_random_uuid(),
