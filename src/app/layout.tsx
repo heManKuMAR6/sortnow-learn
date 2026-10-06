@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import { Backdrop } from "@/components/Backdrop";
+import { CampaignCapture } from "@/components/CampaignCapture";
 import { DailyCheckIn } from "@/components/DailyCheckIn";
 import { NewsletterPrompt } from "@/components/NewsletterPrompt";
 import { ProgressProvider } from "@/components/ProgressProvider";
@@ -66,6 +67,7 @@ export default async function RootLayout({
           Skip to content
         </a>
         <Backdrop />
+        <CampaignCapture />
         <ScrollProgress />
         <SiteHeader
           limbo={user && !profile ? user.mode : undefined}

@@ -42,11 +42,19 @@ Where things live:
 
 Every form that collects details has an unticked agreement box. The server saves the exact words (with a version, `src/lib/consent.ts`) and the time next to the details. Leads and subscribers made before consent was collected are kept but flagged `consent = false` and are left out of the newsletter export. Each subscriber has an unsubscribe token; the link is `/unsubscribe?t=<token>` and the admin newsletter export includes it per row.
 
-`/admin` shows leads, subscribers, members and where people go (page views, time on page, scroll depth, referrers), with CSV exports. Activity is recorded for signed-in members and on reel drops, and the privacy notice says so. Newsletter *sending* is not built: export the list from `/admin` and send with a mail tool, using each row's unsubscribe link.
+`/admin` shows leads, subscribers, members and where members go (page views, time on page, scroll depth, referrers), with CSV exports. **Only signed-in members are tracked.** A visitor who opens a reel drop and never fills the form is not recorded at all (the events table refuses anonymous rows).
+
+**Link tags.** Add `?src=<tag>` to a link you share, for example `https://learn.sortnow.co/week?src=ig-week-41`. The tag is kept for the visit and saved with the lead, so `/admin` and the handy queries show which post or newsletter each person came from. Tags are letters, numbers, `-` and `_`, up to 40 characters.
+
+**Newsletter.** `/admin/newsletter` lets an admin write an issue, send a test to themselves, then send to everyone who agreed and has not unsubscribed (type SEND to confirm). It sends through Resend in batches with a one-click unsubscribe header and link on every email, records who got it, and a second click carries on or retries only the failures. Without `RESEND_API_KEY` and `NEWSLETTER_FROM` the page explains the setup and sending is off.
+
+**Spam.** The lead and newsletter forms have a hidden field that only scripts fill, and each address is limited to 15 lead submissions per 10 minutes.
+
+Handy checks you can paste into the Supabase SQL editor are in `docs/handy-queries.sql`.
 
 ## Streak rules
 
-Checking in gives +1 point once a day and does not move the streak. The streak moves only when you **pass today's featured challenge** (3 of 4). Each challenge allows 3 tries a day and its answers are shown only after a pass or the third try. Lessons and other challenges pay points once but do not count toward the streak.
+Checking in gives +1 point once a day and does not move the streak. The streak moves only when you **pass today's featured challenge** (3 of 4). There are 14 challenges, so the featured one repeats every 14 days. Each challenge allows 3 tries a day and its answers are shown only after a pass or the third try. Lessons and other challenges pay points once but do not count toward the streak.
 
 ## Run locally
 
@@ -63,6 +71,9 @@ Copy `.env.example` to `.env.local`. Variable names:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `APP_SECRET` (32+ random characters, signs the unlock cookie)
+- `NEXT_PUBLIC_SITE_URL` (for example `https://learn.sortnow.co`, used in unsubscribe links)
+- Newsletter sending (optional, server-side only): `RESEND_API_KEY`, `NEWSLETTER_FROM` (for example `sortNow Learn <news@learn.sortnow.co>`, the domain must be verified in Resend), and `NEWSLETTER_FOOTER_ADDRESS` (a postal address line for the email footer)
 
 If either is missing, sign-up and sign-in use a labeled local demo session (an httpOnly cookie, also mirrored in localStorage). Events are appended to `data/events.json` (gitignored) and kept in a short in-memory list. `/activity` shows both for the current demo user.
 

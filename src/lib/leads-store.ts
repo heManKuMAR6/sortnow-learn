@@ -9,6 +9,7 @@ export type LocalLead = {
   phone: string | null;
   source: string;
   path: string;
+  campaign?: string | null;
   createdAt: string;
 };
 

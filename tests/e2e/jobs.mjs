@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 const B=process.env.BASE_URL||'http://localhost:3100'; const b=await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 let bad=0; const ok=(c,l)=>{console.log(c?'ok  ':'FAIL',l); if(!c) bad++;};
-const signup=async(ctx,email,name)=>{ const pg=await ctx.newPage(); await pg.goto(B+'/signup',{waitUntil:'networkidle'}); await pg.fill('input[name=name]',name); await pg.fill('input[name=email]',email); await pg.fill('input[name=password]','secret12'); await pg.check('input[type=checkbox] >> nth=0'); await pg.click('button:has-text("Create my account")'); await pg.waitForURL('**/dashboard'); return pg; };
+const signup=async(ctx,email,name)=>{ const pg=await ctx.newPage(); await pg.goto(B+'/signup',{waitUntil:'networkidle'}); await pg.fill('input[name=name]',name); await pg.fill('input[name=email]',email); await pg.fill('input[name=password]','secret12'); await pg.check('input[type=checkbox] >> nth=0'); await pg.click('button:has-text("Create my account")'); if (!(await pg.waitForURL('**/dashboard',{timeout:5000}).then(()=>true).catch(()=>false))) { await pg.goto(B+'/login',{waitUntil:'networkidle'}); await pg.fill('input[name=email]',email); await pg.fill('input[name=password]','secret12'); await pg.click('button:has-text("Sign in")'); await pg.waitForURL('**/dashboard'); } return pg; };
 
 // --- anonymous visitor: jobs are for members, so they are sent to sign in and see nothing of the roles
 const anon=await b.newContext({viewport:{width:1440,height:900}});

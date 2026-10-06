@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import {
   StoreError,
   type Completed,
+  type Issue,
+  type Mailable,
   type PortfolioItem,
   type Profile,
   type ProfileLinks,
@@ -130,6 +132,28 @@ function fail(error: { message: string; code?: string }): never {
 async function db() {
   return createClient();
 }
+
+type IssueRow = {
+  id: string;
+  subject: string;
+  body: string;
+  created_at: string;
+  recipients: number;
+  sent: number;
+  failed: number;
+  completed_at: string | null;
+};
+const ISSUE_COLS = "id, subject, body, created_at, recipients, sent, failed, completed_at";
+const toIssue = (r: IssueRow): Issue => ({
+  id: r.id,
+  subject: r.subject,
+  body: r.body,
+  createdAt: r.created_at,
+  recipients: r.recipients,
+  sent: r.sent,
+  failed: r.failed,
+  completedAt: r.completed_at,
+});
 
 export const supabaseStore: Store = {
   async getProfileById(id) {
@@ -363,6 +387,94 @@ export const supabaseStore: Store = {
       .from("newsletter_subscribers")
       .insert({ email, name, source, consent: true, consent_at: new Date().toISOString(), consent_text: consentText });
     if (error && error.code !== "23505") fail(error);
+  },
+
+  async mailableSubscribers() {
+    const supabase = await db();
+    const { data, error } = await supabase
+      .from("newsletter_subscribers")
+      .select("email, name, unsub_token")
+      .eq("consent", true)
+      .is("unsubscribed_at", null)
+      .order("created_at", { ascending: true })
+      .limit(5000);
+    if (error) fail(error);
+    return ((data ?? []) as { email: string; name: string | null; unsub_token: string }[]).map(
+      (r): Mailable => ({ email: r.email, name: r.name, token: r.unsub_token }),
+    );
+  },
+
+  async createIssue(subject, body, createdBy, recipients) {
+    const supabase = await db();
+    const { data, error } = await supabase
+      .from("newsletter_issues")
+      .insert({ subject, body, created_by: createdBy, recipients })
+      .select(ISSUE_COLS)
+      .single();
+    if (error) {
+      if (error.code === "42501") throw new StoreError("Only admins can send the newsletter.", 403);
+      fail(error);
+    }
+    return toIssue(data as IssueRow);
+  },
+
+  async getIssue(id) {
+    const supabase = await db();
+    const { data, error } = await supabase.from("newsletter_issues").select(ISSUE_COLS).eq("id", id).maybeSingle();
+    if (error) fail(error);
+    return data ? toIssue(data as IssueRow) : null;
+  },
+
+  async listIssues(limit = 20) {
+    const supabase = await db();
+    const { data, error } = await supabase
+      .from("newsletter_issues")
+      .select(ISSUE_COLS)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) fail(error);
+    return ((data ?? []) as IssueRow[]).map(toIssue);
+  },
+
+  async sentEmails(issueId) {
+    const supabase = await db();
+    const { data, error } = await supabase
+      .from("newsletter_sends")
+      .select("email")
+      .eq("issue_id", issueId)
+      .eq("status", "sent")
+      .limit(10000);
+    if (error) fail(error);
+    return ((data ?? []) as { email: string }[]).map((r) => r.email);
+  },
+
+  async recordSends(issueId, rows) {
+    const supabase = await db();
+    if (rows.length) {
+      const { error } = await supabase.from("newsletter_sends").upsert(
+        rows.map((r) => ({ issue_id: issueId, email: r.email, status: r.status, error: r.error?.slice(0, 300) ?? null, at: new Date().toISOString() })),
+        { onConflict: "issue_id,email" },
+      );
+      if (error) fail(error);
+    }
+    const [sent, failed] = await Promise.all([
+      supabase.from("newsletter_sends").select("email", { count: "exact", head: true }).eq("issue_id", issueId).eq("status", "sent"),
+      supabase.from("newsletter_sends").select("email", { count: "exact", head: true }).eq("issue_id", issueId).eq("status", "failed"),
+    ]);
+    const { data, error } = await supabase
+      .from("newsletter_issues")
+      .update({ sent: sent.count ?? 0, failed: failed.count ?? 0 })
+      .eq("id", issueId)
+      .select(ISSUE_COLS)
+      .single();
+    if (error) fail(error);
+    return toIssue(data as IssueRow);
+  },
+
+  async completeIssue(issueId) {
+    const supabase = await db();
+    const { error } = await supabase.from("newsletter_issues").update({ completed_at: new Date().toISOString() }).eq("id", issueId);
+    if (error) fail(error);
   },
 
   async unsubscribe(token) {

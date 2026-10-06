@@ -55,21 +55,16 @@ function sessionId(): string | null {
   }
 }
 
-/** The id the lead form sends along, so a reel visit and the details left afterwards can be tied together. */
-export function currentSessionId(): string | null {
-  return typeof window === "undefined" ? null : sessionId();
-}
-
 /**
- * Records where people go: every page view, scroll depth, clicks and time on page. It runs
- * for signed-in members everywhere, and for anyone on a reel drop (/ig). The privacy notice
- * says so, and the sign-up and lead forms ask for agreement first.
+ * Records where signed-in members go: every page view, scroll depth, clicks and time on
+ * page. Nothing is recorded for visitors who have not signed in (including people who open
+ * a reel drop and never fill the form). Members agree to it at sign-up; /privacy says so.
  */
 export function Tracker({ signedIn }: { signedIn: boolean }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!signedIn && !pathname.startsWith("/ig")) return;
+    if (!signedIn) return;
 
     let maxDepth = 0;
     let highestSent = 0;

@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   let csv: string;
   switch (kind) {
     case "leads":
-      csv = toCsv(data.leads, ["name", "email", "phone", "source", "path", "consent", "consent_at", "unsubscribed_at", "created_at"]);
+      csv = toCsv(data.leads, ["name", "email", "phone", "source", "path", "campaign", "consent", "consent_at", "unsubscribed_at", "created_at"]);
       break;
     case "subscribers":
       csv = toCsv(data.subscribers, ["email", "name", "source", "consent", "consent_at", "unsubscribed_at", "created_at"]);

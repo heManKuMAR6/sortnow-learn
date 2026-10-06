@@ -71,3 +71,18 @@ export class StoreError extends Error {
     super(message);
   }
 }
+
+export type Mailable = { email: string; name: string | null; token: string };
+
+export type Issue = {
+  id: string;
+  subject: string;
+  body: string;
+  createdAt: string;
+  recipients: number;
+  sent: number;
+  failed: number;
+  completedAt: string | null;
+};
+
+export type SendRecord = { email: string; status: "sent" | "failed"; error?: string };

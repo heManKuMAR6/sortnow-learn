@@ -24,6 +24,8 @@ node tests/e2e/jobs.mjs
 node tests/e2e/security.mjs      # takes a few minutes; the coach test makes 24 calls
 node tests/e2e/audience.mjs      # run after regression: it needs the leads that suite saves
 # no browser installed? CHROMIUM=/path/to/chromium node tests/e2e/...
+# audience.mjs also starts a stand-in mail server on port 4010; start the app with
+#   RESEND_API_KEY=testkey12345 NEWSLETTER_FROM='Test <news@example.com>' RESEND_API_URL=http://localhost:4010 ALLOW_DEMO_MODE=1 ADMIN_EMAILS=admin@example.com npx next start -p 3100
 ```
 
 `BASE_URL` points the e2e suites at another address. `SHOTS=/some/dir` saves screenshots. The e2e suites write test accounts to `data/` (gitignored).

@@ -8,9 +8,21 @@ import { LESSON_POINTS } from "@/lib/points";
 import { starterJobs, type Job } from "@/lib/jobs";
 import { HANDLE_RE, suggestHandle } from "@/lib/platform/handle";
 import type { Store } from "@/lib/platform/store";
-import { StoreError, type Profile } from "@/lib/platform/types";
+import { StoreError, type Issue, type Mailable, type Profile } from "@/lib/platform/types";
 
 const MAX_AVATAR_BYTES = 120_000;
+
+type DemoIssue = Awaited<ReturnType<typeof demoDoc>>["issues"][number];
+const issueOut = (i: DemoIssue): Issue => ({
+  id: i.id,
+  subject: i.subject,
+  body: i.body,
+  createdAt: i.createdAt,
+  recipients: i.recipients,
+  sent: Object.values(i.sends).filter((s) => s.status === "sent").length,
+  failed: Object.values(i.sends).filter((s) => s.status === "failed").length,
+  completedAt: i.completedAt,
+});
 
 async function jobsOf(): Promise<{ doc: Awaited<ReturnType<typeof demoDoc>>; jobs: Job[] }> {
   const doc = await demoDoc();
@@ -253,6 +265,51 @@ export const demoStore: Store = {
       unsubToken: randomUUID().replace(/-/g, ""),
       unsubscribedAt: null,
     });
+    await saveDemoDoc(doc);
+  },
+
+  async mailableSubscribers() {
+    const doc = await demoDoc();
+    return doc.subscribers
+      .filter((s) => s.consentText && !s.unsubscribedAt && s.unsubToken)
+      .map((s): Mailable => ({ email: s.email, name: s.name, token: s.unsubToken as string }));
+  },
+
+  async createIssue(subject, body, _createdBy, recipients) {
+    const doc = await demoDoc();
+    const issue: DemoIssue = { id: randomUUID(), subject, body, createdAt: new Date().toISOString(), recipients, completedAt: null, sends: {} };
+    doc.issues.push(issue);
+    await saveDemoDoc(doc);
+    return issueOut(issue);
+  },
+
+  async getIssue(id) {
+    const issue = (await demoDoc()).issues.find((i) => i.id === id);
+    return issue ? issueOut(issue) : null;
+  },
+
+  async listIssues(limit = 20) {
+    return [...(await demoDoc()).issues].reverse().slice(0, limit).map(issueOut);
+  },
+
+  async sentEmails(issueId) {
+    const issue = (await demoDoc()).issues.find((i) => i.id === issueId);
+    return issue ? Object.entries(issue.sends).filter(([, v]) => v.status === "sent").map(([k]) => k) : [];
+  },
+
+  async recordSends(issueId, rows) {
+    const doc = await demoDoc();
+    const issue = doc.issues.find((i) => i.id === issueId);
+    if (!issue) throw new StoreError("No such issue.", 404);
+    for (const r of rows) issue.sends[r.email] = { status: r.status, ...(r.error ? { error: r.error } : {}) };
+    await saveDemoDoc(doc);
+    return issueOut(issue);
+  },
+
+  async completeIssue(issueId) {
+    const doc = await demoDoc();
+    const issue = doc.issues.find((i) => i.id === issueId);
+    if (issue) issue.completedAt = new Date().toISOString();
     await saveDemoDoc(doc);
   },
 
