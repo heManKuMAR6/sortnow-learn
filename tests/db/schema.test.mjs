@@ -127,12 +127,17 @@ ok((await anonQ(`select unsubscribe('short') ok`)).rows[0].ok===false, 'a bad to
 ok((await anonQ(`select unsubscribe($1) ok`,[tok])).rows[0].ok===true, 'the token unsubscribes');
 ok((await db.query(`select unsubscribed_at is not null u from newsletter_subscribers where email='a@b.co'`)).rows[0].u===true, 'and records when');
 
-// ---- audit events
-const ev = (type, path, user=null) => anonQ(`insert into events(user_id,type,path,session_id,seconds) values (null,$1,$2,'sess-1',12)`, [type,path]);
-await ev('dwell','/ig/some-drop'); await ev('session','/ig/some-drop');
-await fails('anon cannot log events outside /ig', ev('view','/jobs'));
-ok((await as(A, `select * from events`)).rows.length>=2 && (await as(U, `select * from events where user_id is null`)).rows.length===0, 'admins read the audit trail; members only their own rows');
+// ---- audit events: members only, never anonymous visitors
+const evA = (type, path) => anonQ(`insert into events(user_id,type,path,session_id,seconds) values (null,$1,$2,'sess-1',12)`, [type,path]);
+await fails('anon cannot log an event on a reel drop', evA('view','/ig/some-drop'));
+await fails('anon cannot log a dwell event', evA('dwell','/ig/some-drop'));
+await fails('anon cannot log any event', evA('view','/jobs'));
 await as(U, `insert into events(user_id,type,path,seconds,referrer,session_id) values ($1,'dwell','/learn/beginner',40,'/', 's2')`, [U]);
+ok((await as(A, `select * from events`)).rows.length>=1 && (await as(U, `select * from events where user_id<>$1`,[U])).rows.length===0, 'admins read the audit trail; members only their own rows');
+await fails('a member cannot log an event as someone else', as(U, `insert into events(user_id,type,path) values ($1,'view','/x')`, [V]));
+await lead('Tagged','tag@c.co','+1 214 555 0102','instagram');
+await anonQ(`insert into leads(name,email,phone,source,consent,consent_at,consent_text,campaign) values ('Tag','tag2@c.co','+1 214 555 0103','site',true,now(),'v','ig-week-41')`);
+await fails('a bad campaign tag is refused', anonQ(`insert into leads(name,email,phone,source,consent,consent_at,consent_text,campaign) values ('Tag','tag3@c.co','+1 214 555 0104','site',true,now(),'v','bad tag; drop')`));
 
 // ---- streak: only passing today's daily challenge moves it; three tries a day
 const W='44444444-4444-4444-4444-444444444444', X='55555555-5555-5555-5555-555555555555';
@@ -165,6 +170,16 @@ r = (await as(X, `select * from submit_challenge($1,$2)`, [daily, bad3])).rows[0
 ok(Array.isArray(r.o_correct) && r.o_attempts_left===0, 'third miss: answers revealed, no tries left');
 await fails('a fourth try the same day', as(X, `select * from submit_challenge($1,$2)`, [daily, gd]));
 
+// ---- newsletter issues: admins only
+await fails('anon cannot read issues', anonQ(`select * from newsletter_issues`));
+await fails('a member cannot create an issue', as(U, `insert into newsletter_issues(subject,body) values ('hi','there')`));
+await as(A, `insert into newsletter_issues(subject,body,created_by,recipients) values ('Week 41','Hello there',$1,1)`, [A]);
+const issueId=(await as(A, `select id from newsletter_issues limit 1`)).rows[0].id;
+await as(A, `insert into newsletter_sends(issue_id,email,status) values ($1,'a@b.co','sent')`, [issueId]);
+ok((await as(U, `select * from newsletter_issues`)).rows.length===0 && (await as(U, `select * from newsletter_sends`)).rows.length===0, 'members see no issues or send records');
+await fails('a member cannot write send records', as(U, `insert into newsletter_sends(issue_id,email,status) values ($1,'z@b.co','sent')`, [issueId]));
+ok((await as(A, `select * from newsletter_sends`)).rows.length===1, 'an admin sees the send records');
+
 // ---- job descriptions are real JDs
 ok((await anonQ(`select count(*)::int c from jobs where cardinality(responsibilities)>=4 and cardinality(requirements)>=4 and cardinality(about)>=2`)).rows[0].c===8, 'all 8 starter jobs carry responsibilities, requirements and an overview');
 
@@ -174,5 +189,5 @@ ok((await db.query(`select count(*)::int c from profiles where id='${V}'`)).rows
 await fails('anon cannot delete accounts', anonQ(`select delete_my_account()`));
 ok((await anonQ(`select slug from jobs`)).rows.length===8, 're-running schema is idempotent (jobs not duplicated)');
 await db.exec(SQL());
-ok((await db.query(`select count(*)::int c from award_catalog`)).rows[0].c===10 && (await db.query(`select count(*)::int c from challenge_answers`)).rows[0].c===24, 'catalog and answers present (10 + 24) after re-run');
+ok((await db.query(`select count(*)::int c from award_catalog`)).rows[0].c===18 && (await db.query(`select count(*)::int c from challenge_answers`)).rows[0].c===56, 'catalog and answers present (18 + 56) after re-run');
 console.log(bad ? `${bad} FAILED` : 'ALL SQL CHECKS PASSED'); process.exitCode = bad?1:0;

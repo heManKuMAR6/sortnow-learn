@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ChallengeCard } from "@/components/ChallengeCard";
 import { Reveal } from "@/components/Reveal";
 import { Stagger, StaggerItem } from "@/components/Stagger";
@@ -34,19 +33,9 @@ export default async function ChallengesPage() {
         <p className="mt-4 max-w-xl text-lg text-secondary">
           Each one takes a few minutes and teaches a habit you will use at work. Pass with 3 of 4 to earn points.
         </p>
-        {user ? (
-          <p className="mt-4 text-sm font-medium text-teal">
-            {solved} of {challenges.length} solved
-          </p>
-        ) : (
-          <p className="mt-4 text-sm text-secondary">
-            Play any of them now.{" "}
-            <Link href="/signup?next=/challenges" className="text-link">
-              Join free
-            </Link>{" "}
-            to earn points and keep a streak.
-          </p>
-        )}
+        <p className="mt-4 text-sm font-medium text-teal">
+          {solved} of {challenges.length} solved
+        </p>
       </Reveal>
 
       <Reveal className="mt-8">

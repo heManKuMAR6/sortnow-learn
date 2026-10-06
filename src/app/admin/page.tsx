@@ -57,7 +57,7 @@ export default async function AdminPage() {
         Audience<span className="dot">.</span>
       </h1>
       <p className="mt-3 text-secondary">
-        Only admins see this page. <Link href="/admin/jobs" className="text-link">Manage jobs</Link>
+        Only admins see this page. <Link href="/admin/newsletter" className="text-link">Write and send the newsletter</Link> · <Link href="/admin/jobs" className="text-link">Manage jobs</Link>
       </p>
       {data.mode === "demo" ? <p className="mt-4 rounded-2xl bg-sun/30 p-3 text-sm">Preview mode: only leads saved to this machine are shown.</p> : null}
       {data.errors.length ? (
@@ -101,8 +101,8 @@ export default async function AdminPage() {
         <h2 className="text-2xl">Leads</h2>
         <p className="mb-3 text-sm text-secondary">People who left their details on a reel drop or the notes.</p>
         <Table
-          head={["When", "Name", "Email", "Phone", "From", "Agreed", "Unsubscribed"]}
-          rows={data.leads.slice(0, 200).map((l) => [when(l.created_at), l.name, l.email, l.phone, l.path ?? l.source, l.consent ? when(l.consent_at) : "No (older entry, do not email)", when(l.unsubscribed_at)])}
+          head={["When", "Name", "Email", "Phone", "Unlocked on", "Link tag", "Agreed", "Unsubscribed"]}
+          rows={data.leads.slice(0, 200).map((l) => [when(l.created_at), l.name, l.email, l.phone, l.path ?? l.source, l.campaign, l.consent ? when(l.consent_at) : "No (older entry, do not email)", when(l.unsubscribed_at)])}
           empty="No leads yet."
         />
       </section>

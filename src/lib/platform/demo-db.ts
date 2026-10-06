@@ -15,6 +15,7 @@ export type DemoDoc = {
   portfolio: (PortfolioItem & { userId: string })[];
   applications: { userId: string; jobSlug: string; note: string; createdAt: string }[];
   subscribers: { email: string; name: string | null; source: string; createdAt: string; consentText?: string; unsubToken?: string; unsubscribedAt?: string | null }[];
+  issues: { id: string; subject: string; body: string; createdAt: string; recipients: number; completedAt: string | null; sends: Record<string, { status: "sent" | "failed"; error?: string }> }[];
   /** Challenge tries per person, slug and day: "<id>|<slug>|<day>". */
   attempts: Record<string, number>;
   /** null until first use, then seeded from the starter listings. */
@@ -26,7 +27,7 @@ const filePath = path.join(process.cwd(), "data", "platform.json");
 const g = globalThis as unknown as { __snDemoDoc?: Promise<DemoDoc> };
 
 function empty(): DemoDoc {
-  return { profiles: {}, awards: [], activity: {}, portfolio: [], applications: [], subscribers: [], attempts: {}, jobs: null, private: {} };
+  return { profiles: {}, awards: [], activity: {}, portfolio: [], applications: [], subscribers: [], issues: [], attempts: {}, jobs: null, private: {} };
 }
 
 async function load(): Promise<DemoDoc> {

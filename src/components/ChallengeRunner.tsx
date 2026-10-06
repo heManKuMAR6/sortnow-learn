@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { PublicChallenge } from "@/lib/challenges";
 import { toast } from "@/lib/toast";
 
@@ -14,7 +14,6 @@ type Graded = {
   passed: boolean;
   gained: number;
   results: Result[];
-  signedIn: boolean;
   worth: number;
   streak: number;
   streakDay: boolean;
@@ -24,18 +23,14 @@ type Graded = {
 
 const KEYS = ["A", "B", "C", "D", "E"];
 
-const PENDING_KEY = "sn_pending_challenge";
-
 export function ChallengeRunner({
   challenge,
   nextHref,
   nextTitle,
-  signedIn,
 }: {
   challenge: PublicChallenge;
   nextHref: string | null;
   nextTitle: string | null;
-  signedIn: boolean;
 }) {
   const router = useRouter();
   const reduce = useReducedMotion();
@@ -68,14 +63,6 @@ export function ChallengeRunner({
         return;
       }
       setGraded(body);
-      if (body.passed && !body.signedIn) {
-        // Remember the passed attempt so it can be claimed right after sign-up.
-        try {
-          window.localStorage.setItem(PENDING_KEY, JSON.stringify({ slug: challenge.slug, answers: given, at: Date.now() }));
-        } catch {
-          // ignore
-        }
-      }
       if (body.streakDay) {
         window.setTimeout(
           () =>
@@ -107,27 +94,6 @@ export function ChallengeRunner({
     }
   }
 
-  // Back from sign-up with a passed attempt waiting: claim it, so the points are not lost.
-  const claimed = useRef(false);
-  useEffect(() => {
-    if (!signedIn || claimed.current) return;
-    claimed.current = true;
-    try {
-      const raw = window.localStorage.getItem(PENDING_KEY);
-      if (!raw) return;
-      const pendingAttempt = JSON.parse(raw) as { slug?: string; answers?: (number | null)[]; at?: number };
-      if (pendingAttempt.slug !== challenge.slug) return;
-      window.localStorage.removeItem(PENDING_KEY);
-      if (!Array.isArray(pendingAttempt.answers) || Date.now() - (pendingAttempt.at ?? 0) > 24 * 3600 * 1000) return;
-      setAnswers(pendingAttempt.answers);
-      setStep(total - 1);
-      void submit(pendingAttempt.answers);
-    } catch {
-      // ignore
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signedIn]);
-
   function again() {
     setGraded(null);
     setAnswers(Array(total).fill(null));
@@ -152,11 +118,9 @@ export function ChallengeRunner({
           <h2 className="mt-5 text-4xl">{graded.passed ? "Solved" : "So close"}</h2>
           <p className="mt-2 text-secondary">
             {graded.passed
-              ? graded.signedIn
-                ? graded.gained > 0
-                  ? `You earned ${graded.gained} points.`
-                  : "You already earned the points for this one. Replays are for fun."
-                : `You passed. Create a free account to earn ${graded.worth} points for it.`
+              ? graded.gained > 0
+                ? `You earned ${graded.gained} points.`
+                : "You already earned the points for this one. Replays are for fun."
               : graded.attemptsLeft > 0
                 ? `You need 3 of 4 to pass. ${graded.attemptsLeft} ${graded.attemptsLeft === 1 ? "try" : "tries"} left today. The answers stay hidden until you pass or use your last try.`
                 : "That was your last try today. The answers are below. Come back tomorrow."}
@@ -169,11 +133,6 @@ export function ChallengeRunner({
             <p className="mt-2 text-sm text-secondary">Your streak moves when you pass today&apos;s featured challenge.</p>
           ) : null}
           <div className="mt-5 flex flex-wrap justify-center gap-3">
-            {!graded.signedIn && graded.passed ? (
-              <Link href={`/signup?next=/challenges/${challenge.slug}`} className="pill-coral" data-track="challenge-signup">
-                Create account, earn the points
-              </Link>
-            ) : null}
             {graded.passed || graded.attemptsLeft > 0 ? (
               <button type="button" className="pill-white" onClick={again} data-track="challenge-retry">
                 {graded.passed ? "Play again" : "Try again"}

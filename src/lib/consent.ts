@@ -2,10 +2,10 @@
 // person's details (not whatever the browser sent), so there is always a record of what
 // they were shown. Change the wording => bump CONSENT_VERSION.
 
-export const CONSENT_VERSION = "2026-10-v1";
+export const CONSENT_VERSION = "2026-10-v2";
 
 export const LEAD_CONSENT_TEXT =
-  "I agree that sortNow can store my name, email and phone number, send me this drop and a weekly newsletter, and record which pages I view to improve the site. I can unsubscribe in one click or ask for my data to be deleted at any time.";
+  "I agree that sortNow can store my name, email and phone number, send me this drop and a weekly newsletter. I can unsubscribe in one click or ask for my data to be deleted at any time.";
 
 export const NEWSLETTER_CONSENT_TEXT =
   "I agree that sortNow can store my email and send me the weekly newsletter. I can unsubscribe in one click at any time.";

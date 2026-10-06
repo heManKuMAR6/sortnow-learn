@@ -1,5 +1,5 @@
 -- Run once in the Supabase SQL editor (Dashboard > SQL editor > New query > paste > Run).
--- These two statements were left out of the automated update because the Supabase connector
+-- These statements were left out of the automated update because the Supabase connector
 -- asks a person to confirm any statement that drops or deletes. Everything else is already applied.
 
 -- 1. Let the activity log record time-on-page and visit starts (adds 'dwell' and 'session').
@@ -23,3 +23,6 @@ end;
 $$;
 revoke all on function public.delete_my_account() from public, anon;
 grant execute on function public.delete_my_account() to authenticated;
+
+-- 3. Remove tracking rows saved about visitors who were not signed in (the site no longer records any).
+delete from public.events where user_id is null;

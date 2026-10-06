@@ -9,6 +9,7 @@ export type LeadRow = {
   phone: string | null;
   source: string;
   path: string | null;
+  campaign: string | null;
   consent: boolean;
   consent_at: string | null;
   unsubscribed_at: string | null;
@@ -61,8 +62,8 @@ export async function loadAdminData(): Promise<AdminData> {
   if (!isSupabaseConfigured()) {
     out.mode = "demo";
     try {
-      const raw = JSON.parse(await readFile(path.join(process.cwd(), "data", "leads.json"), "utf8")) as { name: string; email: string; phone: string | null; source: string; path: string; createdAt: string }[];
-      out.leads = raw.map((l) => ({ name: l.name, email: l.email, phone: l.phone, source: l.source, path: l.path, consent: true, consent_at: l.createdAt, unsubscribed_at: null, created_at: l.createdAt })).reverse();
+      const raw = JSON.parse(await readFile(path.join(process.cwd(), "data", "leads.json"), "utf8")) as { name: string; email: string; phone: string | null; source: string; path: string; campaign?: string | null; createdAt: string }[];
+      out.leads = raw.map((l) => ({ name: l.name, email: l.email, phone: l.phone, source: l.source, path: l.path, campaign: (l as { campaign?: string | null }).campaign ?? null, consent: true, consent_at: l.createdAt, unsubscribed_at: null, created_at: l.createdAt })).reverse();
     } catch {
       // No local leads yet.
     }
@@ -70,7 +71,7 @@ export async function loadAdminData(): Promise<AdminData> {
   }
   const supabase = await createClient();
   const [leads, subs, members, events] = await Promise.all([
-    supabase.from("leads").select("name, email, phone, source, path, consent, consent_at, unsubscribed_at, created_at").order("created_at", { ascending: false }).limit(2000),
+    supabase.from("leads").select("name, email, phone, source, path, campaign, consent, consent_at, unsubscribed_at, created_at").order("created_at", { ascending: false }).limit(2000),
     supabase.from("newsletter_subscribers").select("email, name, source, consent, consent_at, unsub_token, unsubscribed_at, created_at").order("created_at", { ascending: false }).limit(2000),
     supabase.rpc("admin_members"),
     supabase.from("events").select("user_id, type, path, session_id, referrer, seconds, depth, created_at").order("created_at", { ascending: false }).limit(EVENT_LIMIT),

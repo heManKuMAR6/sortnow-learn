@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { isSupabaseConfigured } from "@/lib/env";
 import type { EventInput, EventType } from "@/lib/event-types";
 import { appendLocalEvent } from "@/lib/events-store";
 import { getCurrentUser } from "@/lib/session";
@@ -53,8 +52,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid event." }, { status: 400 });
   }
 
-  const igVisit = event.path.startsWith("/ig");
-  if (!user && !igVisit) {
+  // Only signed-in members are tracked. Anonymous visitors are never recorded.
+  if (!user) {
     return NextResponse.json({ error: "Sign in required." }, { status: 401 });
   }
 
@@ -82,24 +81,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  if (!user && isSupabaseConfigured()) {
-    try {
-      const supabase = await createClient();
-      const { error } = await supabase.from("events").insert({
-        user_id: null,
-        type: event.type,
-        path: event.path,
-        target: event.target,
-        depth: event.depth,
-        created_at: event.createdAt,
-        ...extra,
-      });
-      if (!error) return NextResponse.json({ ok: true });
-    } catch {
-      // Fall through to the file store.
-    }
-  }
-
-  await appendLocalEvent(user?.id ?? "visitor", event);
+  await appendLocalEvent(user.id, event);
   return NextResponse.json({ ok: true });
 }

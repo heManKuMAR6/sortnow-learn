@@ -186,18 +186,7 @@ grant insert on public.leads to anon, authenticated;
 alter table public.events alter column user_id drop not null;
 alter table public.leads alter column source set default 'site';
 
-drop policy if exists "events public ig insert" on public.events;
-create policy "events public ig insert"
-  on public.events
-  for insert
-  to anon, authenticated
-  with check (
-    user_id is null
-    and type in ('view', 'scroll')
-    and path like '/ig%'
-  );
 
-grant insert on public.events to anon;
 
 -- =====================================================================
 -- Platform v2: public profiles, streaks and points, portfolio, jobs,
@@ -445,7 +434,15 @@ insert into public.award_catalog (kind, ref, points, position) values
   ('challenge', 'pick-the-right-tool', 20, 2),
   ('challenge', 'whats-in-the-context', 15, 3),
   ('challenge', 'is-it-safe-to-paste', 20, 4),
-  ('challenge', 'agent-or-not', 25, 5)
+  ('challenge', 'agent-or-not', 25, 5),
+  ('challenge', 'tokens-in-plain-words', 15, 6),
+  ('challenge', 'same-question-different-answer', 15, 7),
+  ('challenge', 'summaries-you-can-trust', 20, 8),
+  ('challenge', 'real-or-generated', 20, 9),
+  ('challenge', 'prompt-search-or-retrain', 25, 10),
+  ('challenge', 'measure-before-you-ship', 25, 11),
+  ('challenge', 'who-checks-the-work', 20, 12),
+  ('challenge', 'whose-view-is-in-the-answer', 20, 13)
 on conflict (kind, ref) do update set points = excluded.points, position = excluded.position;
 
 insert into public.challenge_answers (slug, idx, answer) values
@@ -472,7 +469,39 @@ insert into public.challenge_answers (slug, idx, answer) values
   ('agent-or-not', 0, 1),
   ('agent-or-not', 1, 0),
   ('agent-or-not', 2, 1),
-  ('agent-or-not', 3, 1)
+  ('agent-or-not', 3, 1),
+  ('tokens-in-plain-words', 0, 1),
+  ('tokens-in-plain-words', 1, 2),
+  ('tokens-in-plain-words', 2, 0),
+  ('tokens-in-plain-words', 3, 3),
+  ('same-question-different-answer', 0, 1),
+  ('same-question-different-answer', 1, 2),
+  ('same-question-different-answer', 2, 2),
+  ('same-question-different-answer', 3, 0),
+  ('summaries-you-can-trust', 0, 3),
+  ('summaries-you-can-trust', 1, 1),
+  ('summaries-you-can-trust', 2, 2),
+  ('summaries-you-can-trust', 3, 0),
+  ('real-or-generated', 0, 1),
+  ('real-or-generated', 1, 3),
+  ('real-or-generated', 2, 3),
+  ('real-or-generated', 3, 0),
+  ('prompt-search-or-retrain', 0, 2),
+  ('prompt-search-or-retrain', 1, 3),
+  ('prompt-search-or-retrain', 2, 1),
+  ('prompt-search-or-retrain', 3, 0),
+  ('measure-before-you-ship', 0, 3),
+  ('measure-before-you-ship', 1, 1),
+  ('measure-before-you-ship', 2, 2),
+  ('measure-before-you-ship', 3, 0),
+  ('who-checks-the-work', 0, 3),
+  ('who-checks-the-work', 1, 1),
+  ('who-checks-the-work', 2, 2),
+  ('who-checks-the-work', 3, 0),
+  ('whose-view-is-in-the-answer', 0, 2),
+  ('whose-view-is-in-the-answer', 1, 1),
+  ('whose-view-is-in-the-answer', 2, 3),
+  ('whose-view-is-in-the-answer', 3, 1)
 on conflict (slug, idx) do update set answer = excluded.answer;
 -- END GENERATED CATALOG
 
@@ -621,6 +650,7 @@ alter table public.leads
   add column if not exists consent_text text,
   add column if not exists session_id text,
   add column if not exists user_agent text,
+  add column if not exists campaign text check (campaign is null or campaign ~ '^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$'),
   add column if not exists unsubscribed_at timestamptz;
 
 alter table public.newsletter_subscribers
@@ -685,9 +715,9 @@ alter table public.events
 create index if not exists events_created_idx on public.events (created_at desc);
 create index if not exists events_path_idx on public.events (path);
 
+-- Visitors who are not signed in are never tracked: no anonymous inserts into events.
 drop policy if exists "events public ig insert" on public.events;
-create policy "events public ig insert" on public.events for insert to anon, authenticated
-  with check (user_id is null and type in ('view', 'scroll', 'click', 'dwell', 'session') and path like '/ig%');
+revoke insert on public.events from anon;
 
 -- ---- Admin console: admins read the lists; nobody else can ---------------
 drop policy if exists "leads admin read" on public.leads;
@@ -896,6 +926,38 @@ alter table public.jobs drop constraint if exists jobs_list_sizes;
 alter table public.jobs add constraint jobs_list_sizes
   check (cardinality(responsibilities) <= 20 and cardinality(requirements) <= 20
      and cardinality(nice_to_have) <= 15 and cardinality(benefits) <= 12);
+
+-- ---- Newsletter: issues you write in /admin/newsletter, and who each was sent to ----
+create table if not exists public.newsletter_issues (
+  id uuid primary key default gen_random_uuid(),
+  subject text not null check (char_length(subject) between 1 and 150),
+  body text not null check (char_length(body) <= 20000),
+  created_at timestamptz not null default now(),
+  created_by uuid references auth.users (id) on delete set null,
+  recipients int not null default 0,
+  sent int not null default 0,
+  failed int not null default 0,
+  completed_at timestamptz
+);
+create table if not exists public.newsletter_sends (
+  issue_id uuid not null references public.newsletter_issues (id) on delete cascade,
+  email text not null,
+  status text not null check (status in ('sent', 'failed')),
+  error text,
+  at timestamptz not null default now(),
+  primary key (issue_id, email)
+);
+alter table public.newsletter_issues enable row level security;
+alter table public.newsletter_sends enable row level security;
+drop policy if exists "issues admin all" on public.newsletter_issues;
+create policy "issues admin all" on public.newsletter_issues for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "sends admin all" on public.newsletter_sends;
+create policy "sends admin all" on public.newsletter_sends for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+revoke all on public.newsletter_issues, public.newsletter_sends from anon, authenticated;
+grant select, insert, update on public.newsletter_issues to authenticated;
+grant select, insert, update on public.newsletter_sends to authenticated;
 
 -- BEGIN GENERATED JOBS (run: npm run gen:catalog; do not edit by hand)
 -- Starter listings. Existing rows keep any edit made in /admin/jobs; a role's description is

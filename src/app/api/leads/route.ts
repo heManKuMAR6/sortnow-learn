@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { isBot, tooMany } from "@/lib/abuse";
+import { SRC_RE } from "@/lib/campaign";
 import { LEAD_CONSENT_TEXT, stamp } from "@/lib/consent";
 import { isSupabaseConfigured } from "@/lib/env";
 import { LEAD_COOKIE, leadCookieOptions, leadCookieValue } from "@/lib/lead-cookie";
@@ -17,6 +19,8 @@ function cleanPath(value: unknown): string {
 }
 
 export async function POST(request: Request) {
+  const limited = tooMany(request, "leads", 15, 10 * 60_000);
+  if (limited) return limited;
   let json: unknown;
   try {
     json = await request.json();
@@ -33,8 +37,11 @@ export async function POST(request: Request) {
   const phone = phoneRaw.length > 0 ? phoneRaw.slice(0, 40) : null;
   const path = cleanPath(row.path);
   const source = path.startsWith("/ig") ? "instagram" : "site";
-  const sessionId = typeof row.sessionId === "string" ? row.sessionId.slice(0, 64) : null;
+  const campaign = typeof row.campaign === "string" && SRC_RE.test(row.campaign) ? row.campaign.toLowerCase() : null;
   const userAgent = (request.headers.get("user-agent") ?? "").slice(0, 300) || null;
+
+  // A script filled the hidden field: look successful, keep nothing, unlock nothing.
+  if (isBot(row)) return NextResponse.json({ ok: true });
 
   if (row.consent !== true) {
     return NextResponse.json({ error: "Please tick the box to say you agree. We only keep your details with your permission." }, { status: 400 });
@@ -55,7 +62,7 @@ export async function POST(request: Request) {
   }
 
   const consentText = stamp(LEAD_CONSENT_TEXT);
-  const lead = { name, email, phone, source, path };
+  const lead = { name, email, phone, source, path, campaign };
 
   let saved = false;
   if (isSupabaseConfigured()) {
@@ -70,7 +77,7 @@ export async function POST(request: Request) {
         consent: true,
         consent_at: new Date().toISOString(),
         consent_text: consentText,
-        session_id: sessionId,
+        campaign,
         user_agent: userAgent,
       });
       if (error) throw new Error(error.message);

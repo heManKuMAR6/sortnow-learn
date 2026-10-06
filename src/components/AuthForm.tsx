@@ -161,6 +161,13 @@ export function AuthForm({
           setError(friendly(signUpError.message));
           return;
         }
+        if (newsletter) {
+          try {
+            window.localStorage.setItem("sn_newsletter", JSON.stringify({ state: "subscribed", at: Date.now() }));
+          } catch {
+            // ignore
+          }
+        }
         if (data.session && newsletter) {
           await fetch("/api/newsletter", {
             method: "POST",

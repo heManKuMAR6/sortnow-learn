@@ -7,10 +7,13 @@ import type {
   CheckInResult,
   Completed,
   LessonResult,
+  Issue,
+  Mailable,
   PortfolioInput,
   PortfolioItem,
   Profile,
   ProfilePatch,
+  SendRecord,
 } from "@/lib/platform/types";
 
 /**
@@ -42,6 +45,16 @@ export interface Store {
   appliedJobs(id: string): Promise<string[]>;
   /** `consentText` is the exact wording the person agreed to; no consent, no row. */
   subscribe(email: string, name: string | null, source: string, consentText: string): Promise<void>;
+
+  /** Newsletter sending (admins only). Mailable = agreed and not unsubscribed. */
+  mailableSubscribers(): Promise<Mailable[]>;
+  createIssue(subject: string, body: string, createdBy: string, recipients: number): Promise<Issue>;
+  getIssue(id: string): Promise<Issue | null>;
+  listIssues(limit?: number): Promise<Issue[]>;
+  /** Emails already sent this issue, so a second click carries on instead of repeating. */
+  sentEmails(issueId: string): Promise<string[]>;
+  recordSends(issueId: string, rows: SendRecord[]): Promise<Issue>;
+  completeIssue(issueId: string): Promise<void>;
 
   /** One-click unsubscribe from the link in every email. True when a subscriber matched the token. */
   unsubscribe(token: string): Promise<boolean>;

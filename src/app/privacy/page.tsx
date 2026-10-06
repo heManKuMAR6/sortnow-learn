@@ -12,7 +12,8 @@ const rows: [string, string, string][] = [
   ["Name, email, password", "When you create an account.", "To run your account. Passwords are hashed by our sign-in provider; we never see them."],
   ["Profile details", "Only what you choose to add: photo, headline, bio, skills, links, portfolio.", "To show your public profile at /u/your-handle. Your email is never shown."],
   ["Points, streak, completed lessons and challenges", "As you use the site.", "To show your progress and rank you fairly."],
-  ["Activity: pages viewed, clicks, scroll depth, time on a page, where you came from, browser type", "While you are signed in, and on any reel drop.", "To improve the lessons and notes, and to tie a reel visit to the details you left afterwards."],
+  ["Activity: pages viewed, clicks, scroll depth, time on a page, where you came from, browser type", "Only while you are signed in to an account. Nothing is recorded about visitors who have not signed in.", "To improve the lessons and notes and to show your own progress."],
+  ["Which post brought you here", "When you leave your details after clicking a link we shared (a short tag such as ig-week-41 in the link).", "So we know which post or newsletter works."],
   ["Job interest", "When you tell us you are interested in a role.", "So sortNow can follow up with you about that role."],
 ];
 
@@ -50,8 +51,8 @@ export default function PrivacyPage() {
 
       <h2 className="mt-8 text-2xl">Cookies</h2>
       <p className="mt-2 text-secondary">
-        We use a sign-in cookie, a cookie that remembers you unlocked the notes, and a small tab-session id that links the pages
-        you view in one visit. We do not use advertising cookies.
+        We use a sign-in cookie, a cookie that remembers you unlocked the notes, and, only while you are signed in, a small tab-session
+        id that links the pages you view in one visit. We do not use advertising cookies.
       </p>
 
       <h2 className="mt-8 text-2xl">Your choices</h2>
