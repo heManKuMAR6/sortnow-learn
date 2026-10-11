@@ -1,0 +1,61 @@
+<!doctype html><meta charset="utf-8"><style>
+@font-face{font-family:Outfit;font-weight:300;src:url(file:///home/user/sortNow-company/node_modules/@fontsource/outfit/files/outfit-latin-300-normal.woff2)}
+@font-face{font-family:Outfit;font-weight:600;src:url(file:///home/user/sortNow-company/node_modules/@fontsource/outfit/files/outfit-latin-600-normal.woff2)}
+html,body{margin:0;background:transparent}
+#stage{position:relative;overflow:hidden;font-family:Outfit}
+#stage.land{width:1920px;height:1080px}
+#stage.vert{width:1080px;height:1920px}
+#stage.light.solid{background:#fbfbfd}
+#stage.dark.solid{background:#0d1a20}
+#bg{position:absolute;inset:0}
+.light #bg{background:radial-gradient(60% 70% at 8% 12%,rgba(176,186,245,.55),transparent 62%),radial-gradient(46% 52% at 8% 80%,rgba(143,221,231,.45),transparent 64%),radial-gradient(52% 58% at 100% 6%,rgba(255,196,176,.7),transparent 58%),radial-gradient(38% 42% at 94% 84%,rgba(255,111,97,.16),transparent 62%)}
+.dark #bg{background:radial-gradient(55% 65% at 12% 10%,rgba(42,140,174,.35),transparent 62%),radial-gradient(45% 50% at 92% 90%,rgba(255,111,97,.16),transparent 62%)}
+.alpha #bg{display:none}
+#lock{position:absolute;left:50%;top:50%;display:flex;align-items:center;gap:56px;transform:translate(-50%,-50%)}
+.vert #lock{flex-direction:column;gap:64px}
+#mark{width:380px;height:380px;filter:drop-shadow(0 28px 56px rgba(31,111,139,.32))}
+.vert #mark{width:440px;height:440px}
+#text{display:flex;flex-direction:column;line-height:.9}
+.vert #text{align-items:center}
+.l1{font-size:200px;font-weight:600;letter-spacing:-.04em;white-space:nowrap}
+.l2{display:flex;align-items:baseline;margin-left:190px;font-size:142px;font-weight:300;white-space:nowrap}
+.vert .l2{margin-left:150px}
+.vert .l1{font-size:210px}
+.dot{color:#ff6f61;font-size:1.4em;margin-left:8px;display:inline-block}
+.light .l1{color:#1d1d1f}.light .l2{color:#6e6e73}
+.dark .l1{color:#fff}.dark .l2{color:rgba(255,255,255,.72)}
+</style>
+<div id="stage"><div id="bg"></div><div id="lock">
+<svg id="mark" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2A8CAE"/><stop offset="1" stop-color="#1B607A"/></linearGradient></defs>
+<g id="tile"><rect width="64" height="64" rx="15" fill="url(#g)"/></g>
+<g stroke-linejoin="round" stroke-width="3">
+<g id="A"><path d="M0 0H17V5.5a4 4 0 1 1 0 6V17H0Z" fill="#8FDDE7" stroke="#8FDDE7" transform="translate(13 34)"/></g>
+<g id="B"><path d="M0 0H5.5a4 4 0 1 1 6 0H17V17H0V11.5a4 4 0 1 0 0-6Z" fill="#FF6F61" stroke="#FF6F61" transform="translate(34 34)"/></g>
+<g id="C"><path d="M0 0H17V17H11.5a4 4 0 1 0-6 0H0Z" fill="#FFD166" stroke="#FFD166" transform="translate(34 13)"/></g></g>
+<g id="spark"><path d="M21.5 14.5 L23.2 19.8 L28.5 21.5 L23.2 23.2 L21.5 28.5 L19.8 23.2 L14.5 21.5 L19.8 19.8Z" fill="#fff"/></g></svg>
+<div id="text"><span class="l1" id="w1">sortNow</span><span class="l2" id="w2"><span id="w2t">Learn</span><span class="dot" id="dot">.</span></span></div></div></div>
+<script>
+const q=new URLSearchParams(location.search);const st=document.getElementById('stage');
+st.className=[q.get('o')||'land',q.get('theme')||'light',q.get('alpha')==='1'?'alpha':'solid'].join(' ');
+const c=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const seg=(t,a,b)=>c((t-a)/(b-a));
+const outCubic=x=>1-Math.pow(1-x,3);
+const outBack=x=>{const k=1.9;return 1+(k+1)*Math.pow(x-1,3)+k*Math.pow(x-1,2)};
+const $=id=>document.getElementById(id);
+window.DURATION=4.4;
+window.setT=function(t){
+  const tile=outCubic(seg(t,0,.5)); $('tile').setAttribute('transform','translate(32 32) scale('+(.9+.1*tile)+') translate(-32 -32)'); $('tile').style.opacity=tile;
+  const a=outCubic(seg(t,.35,.95)); $('A').setAttribute('transform','translate('+(-26*(1-a))+' 0)'); $('A').style.opacity=c(a*1.6);
+  const b=outCubic(seg(t,.55,1.15)); $('B').setAttribute('transform','translate('+(26*(1-b))+' 0)'); $('B').style.opacity=c(b*1.6);
+  const cc=outBack(seg(t,1.05,1.65)); $('C').setAttribute('transform','translate(0 '+(-34*(1-cc))+')'); $('C').style.opacity=c(seg(t,1.05,1.3));
+  const sp=outBack(seg(t,1.55,2.15)); $('spark').setAttribute('transform','translate(21.5 21.5) rotate('+((1-sp)*-90)+') scale('+Math.max(0,sp)+') translate(-21.5 -21.5)'); $('spark').style.opacity=c(seg(t,1.55,1.7));
+  const w1=outCubic(seg(t,1.9,2.55)); $('w1').style.opacity=w1; $('w1').style.transform='translateY('+(26*(1-w1))+'px)';
+  const w2=outCubic(seg(t,2.2,2.85)); $('w2t').style.opacity=w2; $('w2t').style.display='inline-block'; $('w2t').style.transform='translateY('+(22*(1-w2))+'px)';
+  const d=outBack(seg(t,2.9,3.4)); const pulse=t>3.5?1+.07*Math.sin((t-3.5)*5):1; $('dot').style.opacity=c(seg(t,2.9,3.05)); $('dot').style.transform='scale('+(Math.max(0,d)*pulse)+')';
+  const push=1+.035*seg(t,0,window.DURATION);
+  const land=st.classList.contains('land'); const io=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2; const k=1-io(seg(t,1.75,2.55));
+  const sx=land?($('text').offsetWidth+56)/2*k:0, sy=land?0:($('text').offsetHeight+64)/2*k;
+  $('lock').style.transform='translate(calc(-50% + '+sx+'px), calc(-50% + '+sy+'px)) scale('+push+')';
+};
+setT(0);
+</script>
