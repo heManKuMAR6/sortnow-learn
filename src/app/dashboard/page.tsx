@@ -9,7 +9,7 @@ import { SetupNotice } from "@/components/SetupNotice";
 import { Stagger, StaggerItem } from "@/components/Stagger";
 import { StatCard } from "@/components/StatCard";
 import { badgesFor } from "@/lib/badges";
-import { challenges, dailyChallenge } from "@/lib/challenges";
+import { challenges, dailyChallenge, summarize } from "@/lib/challenges";
 import { lessons } from "@/lib/content";
 import { getCurrentProfile, todayFor } from "@/lib/current-profile";
 import { liveStreak } from "@/lib/platform/dates";
@@ -102,7 +102,7 @@ export default async function DashboardPage() {
       <div className="mt-10 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <Reveal className="flex flex-col">
           <p className="eyebrow mb-3">Today&apos;s challenge</p>
-          <ChallengeCard challenge={featured} result={done.challenges[featured.slug]} featured />
+          <ChallengeCard challenge={summarize(featured)} result={done.challenges[featured.slug]} featured />
         </Reveal>
         <Reveal delay={0.06} className="flex flex-col">
           <p className="eyebrow mb-3">Keep learning</p>

@@ -38,6 +38,8 @@ export interface Store {
   checkIn(id: string): Promise<CheckInResult>;
   completeLesson(id: string, slug: string): Promise<LessonResult>;
   submitChallenge(id: string, slug: string, answers: number[]): Promise<ChallengeResult>;
+  /** Tries used today on one challenge (3 are allowed). */
+  triesToday(id: string, slug: string): Promise<number>;
   deleteAccount(id: string): Promise<void>;
   completed(id: string): Promise<Completed>;
   activity(id: string): Promise<Record<string, number>>;

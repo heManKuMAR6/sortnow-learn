@@ -192,6 +192,11 @@ ok((await as(U, `select * from newsletter_issues`)).rows.length===0 && (await as
 await fails('a member cannot write send records', as(U, `insert into newsletter_sends(issue_id,email,status) values ($1,'z@b.co','sent')`, [issueId]));
 ok((await as(A, `select * from newsletter_sends`)).rows.length===1, 'an admin sees the send records');
 
+// ---- hearts: tries used today
+ok((await as(X, `select challenge_tries_today($1) n`, [daily])).rows[0].n===3, 'the player can read how many tries were used today (3)');
+ok((await as(W, `select challenge_tries_today('no-such-challenge') n`)).rows[0].n===0, 'an untouched challenge shows 0 tries');
+await fails('anon cannot read tries', anonQ(`select challenge_tries_today($1)`, [daily]));
+
 // ---- job descriptions are real JDs
 ok((await anonQ(`select count(*)::int c from jobs where cardinality(responsibilities)>=4 and cardinality(requirements)>=4 and cardinality(about)>=2`)).rows[0].c===8, 'all 8 starter jobs carry responsibilities, requirements and an overview');
 

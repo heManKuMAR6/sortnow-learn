@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { AiIcon } from "@/components/AiIcon";
-import type { Challenge } from "@/lib/challenges";
+import { KIND_LABEL } from "@/components/questions/state";
+import type { ChallengeSummary } from "@/lib/challenges";
 
 export function ChallengeCard({
   challenge,
   result,
   featured = false,
 }: {
-  challenge: Challenge;
+  challenge: ChallengeSummary;
   result?: { score: number; total: number };
   featured?: boolean;
 }) {
@@ -28,9 +29,14 @@ export function ChallengeCard({
         </Link>
       </h3>
       <p className="mt-2 text-sm text-secondary">{challenge.blurb}</p>
+      <p className="mt-3 flex flex-wrap gap-1.5">
+        {challenge.kinds.map((k) => (
+          <span key={k} className="fmt-chip">{KIND_LABEL[k].label}</span>
+        ))}
+      </p>
       <p className="mt-4 flex items-center justify-between text-xs text-muted">
         <span>
-          {challenge.level} · {challenge.questions.length} questions · {challenge.minutes} min
+          {challenge.level} · {challenge.questionCount} questions · {challenge.minutes} min
         </span>
         <span className="arrow-link">
           {done ? "Replay" : "Start"} <span>→</span>

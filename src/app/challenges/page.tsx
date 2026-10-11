@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { ChallengeCard } from "@/components/ChallengeCard";
+import { ChallengesBoard, DailyHero } from "@/components/ChallengesBoard";
 import { Reveal } from "@/components/Reveal";
-import { Stagger, StaggerItem } from "@/components/Stagger";
-import { challenges, dailyChallenge } from "@/lib/challenges";
+import { challenges, dailyChallenge, summarize } from "@/lib/challenges";
 import { getCurrentProfile, todayFor } from "@/lib/current-profile";
-import { safely } from "@/lib/safe";
-import { getStore } from "@/lib/platform/store";
-import { getCurrentUser } from "@/lib/session";
 import { requireMember } from "@/lib/gate";
+import { liveStreak, shiftDay } from "@/lib/platform/dates";
+import { getStore } from "@/lib/platform/store";
+import { safely } from "@/lib/safe";
 
 export const metadata: Metadata = {
   title: "Challenges",
@@ -15,13 +14,15 @@ export const metadata: Metadata = {
 };
 
 export default async function ChallengesPage() {
-  await requireMember("/challenges");
-  const user = await getCurrentUser();
-  const done = user
-    ? (await safely(getStore().completed(user.id), { challenges: {}, lessons: [] }, "challenges completed")).challenges
-    : {};
-  const featured = dailyChallenge(todayFor(await getCurrentProfile(user)));
+  const user = await requireMember("/challenges");
+  const profile = await getCurrentProfile(user);
+  const done = (await safely(getStore().completed(user.id), { challenges: {}, lessons: [] }, "challenges completed")).challenges;
+  const today = todayFor(profile);
+  const featured = dailyChallenge(today);
+  const tomorrow = dailyChallenge(shiftDay(today, 1));
   const solved = challenges.filter((c) => done[c.slug]).length;
+  const streak = profile ? liveStreak(profile, today) : 0;
+  const doneToday = Boolean(profile?.lastActiveDay && profile.lastActiveDay >= today);
 
   return (
     <div>
@@ -31,7 +32,7 @@ export default async function ChallengesPage() {
           Little puzzles, big upgrades<span className="dot">.</span>
         </h1>
         <p className="mt-4 max-w-xl text-lg text-secondary">
-          Each one takes a few minutes and teaches a habit you will use at work. Pass with 3 of 4 to earn points.
+          Tap the odd line out, sort the cards, put the steps in order. A few minutes each. Pass with 3 of 4 to earn points.
         </p>
         <p className="mt-4 text-sm font-medium text-teal">
           {solved} of {challenges.length} solved
@@ -39,22 +40,13 @@ export default async function ChallengesPage() {
       </Reveal>
 
       <Reveal className="mt-8">
-        <p className="eyebrow mb-3">Today&apos;s streak puzzle: pass it to keep your streak</p>
-        <ChallengeCard challenge={featured} result={done[featured.slug]} featured />
+        <DailyHero challenge={summarize(featured)} doneToday={doneToday} streak={streak} tomorrow={tomorrow.title} />
       </Reveal>
 
       <Reveal className="mt-10">
-        <p className="eyebrow">All challenges</p>
+        <p className="eyebrow mb-3">All challenges</p>
+        <ChallengesBoard items={challenges.filter((c) => c.slug !== featured.slug).map(summarize)} done={done} />
       </Reveal>
-      <Stagger className="mt-4 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {challenges
-          .filter((c) => c.slug !== featured.slug)
-          .map((c) => (
-            <StaggerItem key={c.slug}>
-              <ChallengeCard challenge={c} result={done[c.slug]} />
-            </StaggerItem>
-          ))}
-      </Stagger>
     </div>
   );
 }

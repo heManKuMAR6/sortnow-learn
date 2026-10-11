@@ -1,4 +1,6 @@
 import { chromium } from 'playwright';
+import { loadTs } from '../../scripts/load-ts.mjs';
+import { playChallenge } from './helpers.mjs';
 import { writeFileSync } from 'fs';
 const B = process.env.BASE_URL || 'http://localhost:3100';
 const EMAIL = `hk${Date.now()}@example.com`;
@@ -47,15 +49,19 @@ ok((await pg.locator('.avatar-initials').first().innerText()).trim() === 'HK', '
 ok(/1\s*\n?\s*1|streak/i.test(await pg.locator('.stat-chip').innerText()) || true, 'stat chip present');
 console.log('   chip:', (await pg.locator('.stat-chip').innerText()).replace(/\s+/g,' '));
 
-// 4 challenge
+// 4 challenge: played through the real UI, whatever mix of formats it has
+const { getChallenge } = await loadTs('src/lib/challenges.ts');
+const wbp = getChallenge('write-a-better-prompt');
 await pg.goto(B + '/challenges/write-a-better-prompt', { waitUntil: 'networkidle' });
-for (let i = 0; i < 4; i++) { await pg.locator('.opt').nth(1).click(); await pg.click(i < 3 ? 'button:has-text("Next")' : 'button:has-text("Check my answers")'); await pg.waitForTimeout(450); }
-await pg.waitForSelector('text=Solved', { timeout: 8000 });
-await pg.waitForTimeout(900); await shot('06-challenge-result');
-ok((await pg.locator('body').innerText()).includes('You earned 20 points'), 'challenge awards 20 points');
+ok((await pg.locator('button:has-text("Start")').count()) === 1 && (await pg.locator('.heart').count()) === 3, 'the challenge opens on an intro with 3 hearts');
+await playChallenge(pg, wbp);
+await pg.waitForSelector('text=Flawless', { timeout: 8000 });
+await pg.waitForTimeout(1200); await shot('06-challenge-result');
+const resultText = await pg.locator('body').innerText();
+ok(resultText.includes('+20') && resultText.includes('earned the points'), 'challenge awards 20 points');
 await pg.click('button:has-text("Play again")');
-for (let i = 0; i < 4; i++) { await pg.locator('.opt').nth(1).click(); await pg.click(i < 3 ? 'button:has-text("Next")' : 'button:has-text("Check my answers")'); await pg.waitForTimeout(450); }
-await pg.waitForSelector('text=Solved');
+await playChallenge(pg, wbp);
+await pg.waitForSelector('text=Flawless');
 ok((await pg.locator('body').innerText()).includes('already earned'), 'replay pays nothing');
 
 // 5 lesson complete

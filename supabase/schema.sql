@@ -447,61 +447,61 @@ on conflict (kind, ref) do update set points = excluded.points, position = exclu
 
 insert into public.challenge_answers (slug, idx, answer) values
   ('spot-the-made-up-answer', 0, 1),
-  ('spot-the-made-up-answer', 1, 1),
-  ('spot-the-made-up-answer', 2, 2),
-  ('spot-the-made-up-answer', 3, 2),
-  ('write-a-better-prompt', 0, 1),
+  ('spot-the-made-up-answer', 1, 6),
+  ('spot-the-made-up-answer', 2, 0),
+  ('spot-the-made-up-answer', 3, 39),
+  ('write-a-better-prompt', 0, 10),
   ('write-a-better-prompt', 1, 1),
   ('write-a-better-prompt', 2, 1),
-  ('write-a-better-prompt', 3, 1),
-  ('pick-the-right-tool', 0, 1),
-  ('pick-the-right-tool', 1, 2),
-  ('pick-the-right-tool', 2, 0),
-  ('pick-the-right-tool', 3, 1),
-  ('whats-in-the-context', 0, 1),
-  ('whats-in-the-context', 1, 1),
-  ('whats-in-the-context', 2, 1),
-  ('whats-in-the-context', 3, 1),
-  ('is-it-safe-to-paste', 0, 2),
-  ('is-it-safe-to-paste', 1, 2),
-  ('is-it-safe-to-paste', 2, 1),
-  ('is-it-safe-to-paste', 3, 1),
-  ('agent-or-not', 0, 1),
-  ('agent-or-not', 1, 0),
-  ('agent-or-not', 2, 1),
-  ('agent-or-not', 3, 1),
+  ('write-a-better-prompt', 3, 6),
+  ('pick-the-right-tool', 0, 21),
+  ('pick-the-right-tool', 1, 3),
+  ('pick-the-right-tool', 2, 2),
+  ('pick-the-right-tool', 3, 3),
+  ('whats-in-the-context', 0, 2),
+  ('whats-in-the-context', 1, 2),
+  ('whats-in-the-context', 2, 10),
+  ('whats-in-the-context', 3, 0),
+  ('is-it-safe-to-paste', 0, 6),
+  ('is-it-safe-to-paste', 1, 3),
+  ('is-it-safe-to-paste', 2, 141),
+  ('is-it-safe-to-paste', 3, 2),
+  ('agent-or-not', 0, 10),
+  ('agent-or-not', 1, 16),
+  ('agent-or-not', 2, 0),
+  ('agent-or-not', 3, 3),
   ('tokens-in-plain-words', 0, 1),
-  ('tokens-in-plain-words', 1, 2),
-  ('tokens-in-plain-words', 2, 0),
-  ('tokens-in-plain-words', 3, 3),
+  ('tokens-in-plain-words', 1, 0),
+  ('tokens-in-plain-words', 2, 10),
+  ('tokens-in-plain-words', 3, 141),
   ('same-question-different-answer', 0, 1),
-  ('same-question-different-answer', 1, 2),
-  ('same-question-different-answer', 2, 2),
-  ('same-question-different-answer', 3, 0),
-  ('summaries-you-can-trust', 0, 3),
-  ('summaries-you-can-trust', 1, 1),
-  ('summaries-you-can-trust', 2, 2),
-  ('summaries-you-can-trust', 3, 0),
-  ('real-or-generated', 0, 1),
-  ('real-or-generated', 1, 3),
-  ('real-or-generated', 2, 3),
-  ('real-or-generated', 3, 0),
-  ('prompt-search-or-retrain', 0, 2),
-  ('prompt-search-or-retrain', 1, 3),
-  ('prompt-search-or-retrain', 2, 1),
-  ('prompt-search-or-retrain', 3, 0),
-  ('measure-before-you-ship', 0, 3),
-  ('measure-before-you-ship', 1, 1),
+  ('same-question-different-answer', 1, 10),
+  ('same-question-different-answer', 2, 3),
+  ('same-question-different-answer', 3, 7),
+  ('summaries-you-can-trust', 0, 0),
+  ('summaries-you-can-trust', 1, 0),
+  ('summaries-you-can-trust', 2, 1),
+  ('summaries-you-can-trust', 3, 6),
+  ('real-or-generated', 0, 0),
+  ('real-or-generated', 1, 0),
+  ('real-or-generated', 2, 39),
+  ('real-or-generated', 3, 10),
+  ('prompt-search-or-retrain', 0, 1),
+  ('prompt-search-or-retrain', 1, 21),
+  ('prompt-search-or-retrain', 2, 5),
+  ('prompt-search-or-retrain', 3, 3),
+  ('measure-before-you-ship', 0, 2),
+  ('measure-before-you-ship', 1, 2),
   ('measure-before-you-ship', 2, 2),
-  ('measure-before-you-ship', 3, 0),
-  ('who-checks-the-work', 0, 3),
-  ('who-checks-the-work', 1, 1),
+  ('measure-before-you-ship', 3, 4),
+  ('who-checks-the-work', 0, 10),
+  ('who-checks-the-work', 1, 3),
   ('who-checks-the-work', 2, 2),
   ('who-checks-the-work', 3, 0),
-  ('whose-view-is-in-the-answer', 0, 2),
+  ('whose-view-is-in-the-answer', 0, 1),
   ('whose-view-is-in-the-answer', 1, 1),
-  ('whose-view-is-in-the-answer', 2, 3),
-  ('whose-view-is-in-the-answer', 3, 1)
+  ('whose-view-is-in-the-answer', 2, 0),
+  ('whose-view-is-in-the-answer', 3, 10)
 on conflict (slug, idx) do update set answer = excluded.answer;
 -- END GENERATED CATALOG
 
@@ -913,6 +913,20 @@ end;
 $$;
 revoke all on function public.submit_challenge(text, int[]) from public, anon;
 grant execute on function public.submit_challenge(text, int[]) to authenticated;
+
+-- How many tries the signed-in person has used today on one challenge (drives the hearts in the player).
+create or replace function public.challenge_tries_today(p_slug text)
+returns int
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce((select n from public.challenge_attempts
+                    where user_id = auth.uid() and slug = p_slug and day = public.local_day(auth.uid())), 0);
+$$;
+revoke all on function public.challenge_tries_today(text) from public, anon;
+grant execute on function public.challenge_tries_today(text) to authenticated;
 
 -- ---- Job descriptions: a real JD, not one line --------------------------
 alter table public.jobs

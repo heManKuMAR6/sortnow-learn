@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { bad, fromError, readJson, requireUser } from "@/lib/api";
 import { getChallenge } from "@/lib/challenges";
+import { MAX_CODE } from "@/lib/question-codes";
 import { getCurrentProfile } from "@/lib/current-profile";
 import { getStore } from "@/lib/platform/store";
 
@@ -18,7 +19,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   if (
     !Array.isArray(answers) ||
     answers.length !== challenge.questions.length ||
-    !answers.every((a) => Number.isInteger(a) && a >= 0 && a < 8)
+    !answers.every((a) => Number.isInteger(a) && a >= 0 && a < MAX_CODE)
   ) {
     return bad("Answer every question first.");
   }
