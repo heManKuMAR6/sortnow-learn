@@ -26,3 +26,16 @@ Put the five scenes in this folder as `s1.mp4` … `s5.mp4`, the voiceover as `v
 python3 captions.py && python3 music.py && ./build.sh
 ```
 To change a caption, edit `CAPTIONS` in `captions.py`. To change timing, the scene boundaries are every 5 s, and the voice phrase cut points are the `atrim` values in `build.sh`.
+
+## Vertical cut (9:16, for Reels, Shorts and TikTok)
+Re-shot for vertical rather than cropped, 1080x1920, same 30.4 s timeline, voiceover and music, ending on `../intro-vertical-light.mp4`.
+
+- **Recommended (app shot):** https://d2ol7oe51mr4n9.cloudfront.net/user_37V9fcZYfdjDnFwBTafEAUpXi9I/2307020f-d801-41c9-91d9-94cad4ad8925.mp4. Scene 3 is over her shoulder, so you see the quiz app on her screen.
+- **Alternative (reaction shot):** https://d2ol7oe51mr4n9.cloudfront.net/user_37V9fcZYfdjDnFwBTafEAUpXi9I/e63936e4-1ec9-4f3b-b3b3-1f999f551f8e.mp4. Scene 3 faces her; the camera sees the back of the phone, and she does a small fist pump.
+
+What changed from the 16:9 film:
+- **Scene 3 fixed.** In the 16:9 film the phone screen faced the camera, so she seemed to play a phone she could not see. Both vertical versions have the screen facing her.
+- **The same woman throughout.** One reference portrait (Higgsfield GPT Image 2.5) was passed as an image reference to scenes 1, 3 and 5.
+- **Captions** come from `captions-vertical.py`: centered, with the card's bottom 340 px above the frame edge so they clear the app's caption and buttons.
+
+Rebuild: `python3 captions-vertical.py && python3 music.py && ./build.sh --vertical`. Prompts are in `prompts.md`.
