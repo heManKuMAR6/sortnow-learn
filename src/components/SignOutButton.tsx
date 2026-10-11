@@ -1,20 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { DEMO_STORAGE_KEY } from "@/lib/demo-session";
-import { createClient } from "@/lib/supabase/client";
+import { endSession } from "@/lib/sign-out";
 
 export function SignOutButton({ mode }: { mode: "supabase" | "demo" }) {
   const router = useRouter();
 
   async function signOut() {
-    if (mode === "supabase") {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-    } else {
-      await fetch("/api/auth/demo", { method: "DELETE" });
-      window.localStorage.removeItem(DEMO_STORAGE_KEY);
-    }
+    await endSession(mode);
     router.push("/");
     router.refresh();
   }

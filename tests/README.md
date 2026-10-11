@@ -4,10 +4,11 @@ Four suites. None is part of `npm test` yet; run them by hand before a release.
 
 | Suite | What it proves | Needs |
 | --- | --- | --- |
+| `unit/idle.test.mjs` | The idle sign-out rules: the activity stamp cannot be forged, the 3-hour limit, which pages are public | Node 22 |
 | `unit/logic.test.mjs` | Timezone days, streak maths, redirect validator | Node 22 |
 | `db/schema.test.mjs` | `supabase/schema.sql` on a real Postgres engine: tamper-proofing, rewards graded and paid only through the catalog, timezone lock, jobs admin-only, delete account, safe to re-run | `@electric-sql/pglite` |
 | `db/rpc-contract.test.mjs` | The real `supabase-js` client against the schema: argument names, result shapes, error messages the app maps to 404/400 | `@electric-sql/pglite` |
-| `e2e/*.mjs` | Browser journeys in preview mode: `regression` (lead form to profile), `jobs` (members-only board, full JD, admin), `security` (forged cookies, redirects, coach, progress isolation, tries and streak, deletion, midnight), `audience` (notes gate, consent, admin console and exports, unsubscribe, audit events) | `playwright`, the app running |
+| `e2e/*.mjs` | Browser journeys in preview mode: `regression` (lead form to profile), `jobs` (members-only board, full JD, admin), `security` (forged cookies, redirects, coach, progress isolation, tries and streak, deletion, midnight), `session` (idle sign-out: forged and expired stamps, API calls, the warning and sign-out as a person sees them), `audience` (notes gate, consent, admin console and exports, unsubscribe, audit events) | `playwright`, the app running |
 
 ```bash
 npm i --no-save @electric-sql/pglite playwright
@@ -22,6 +23,8 @@ ALLOW_DEMO_MODE=1 ADMIN_EMAILS=admin@example.com npx next start -p 3100 &
 node tests/e2e/regression.mjs
 node tests/e2e/jobs.mjs
 node tests/e2e/security.mjs      # takes a few minutes; the coach test makes 24 calls
+node tests/e2e/session.mjs       # start the app with APP_SECRET=e2e-session-secret-e2e-session-secret-0001 (the test forges stamps with it)
+node tests/unit/idle.test.mjs
 node tests/e2e/audience.mjs      # run after regression: it needs the leads that suite saves
 # no browser installed? CHROMIUM=/path/to/chromium node tests/e2e/...
 # audience.mjs also starts a stand-in mail server on port 4010; start the app with
