@@ -56,6 +56,16 @@ Handy checks you can paste into the Supabase SQL editor are in `docs/handy-queri
 
 Checking in gives +1 point once a day and does not move the streak. The streak moves only when you **pass today's featured challenge** (3 of 4). There are 14 challenges, so the featured one repeats every 14 days. Each challenge allows 3 tries a day and its answers are shown only after a pass or the third try. Lessons and other challenges pay points once but do not count toward the streak.
 
+## Signing out after inactivity
+
+Members are signed out after **3 hours without using the site**, then sent to the sign-in page with a message and the way back to where they were. Supabase itself keeps sessions alive indefinitely on the free plan, so this is done in the app and needs no database change.
+
+- **The server decides.** A signed "last active" cookie (`sortnow_active`, HttpOnly) is checked on every request in `src/middleware.ts`. Past the limit the session is ended on the server: members pages redirect to `/login?reason=idle`, API calls get a 401 marked `idle`, and public pages just clear the stale session. This holds even if the browser was closed and reopened the next day.
+- **The browser warns first.** `IdleGuard` counts real use only (clicks, keys, scrolling, touch). Five minutes before the limit it shows "Still there?" with a countdown and a *Stay signed in* button. It tells the server about real activity at most every 4 minutes. Background calls (the daily check-in, activity pings) deliberately do **not** count, so an abandoned open tab cannot keep a session alive. Several tabs share one clock.
+- **Change the limit** with `NEXT_PUBLIC_SESSION_IDLE_MINUTES` (default 180, allowed 1 to 1440).
+- Set `APP_SECRET` in Vercel: it signs the activity cookie (without it a weaker fallback key is used, and `/status` says so).
+- Watching a long video without touching the page counts as quiet, since the video plays in its own frame. The warning appears first and one click keeps the session.
+
 ## Run locally
 
 ```bash

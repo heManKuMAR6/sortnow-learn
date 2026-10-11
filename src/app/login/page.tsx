@@ -12,15 +12,16 @@ export const metadata: Metadata = { title: "Sign in" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string | string[]; error?: string | string[]; why?: string | string[] }>;
+  searchParams: Promise<{ next?: string | string[]; error?: string | string[]; why?: string | string[]; reason?: string | string[] }>;
 }) {
-  const { next, error, why } = await searchParams;
+  const { next, error, why, reason } = await searchParams;
+  const idle = reason === "idle";
   const target = safeNext(next);
   if (!error && (await getCurrentUser())) redirect(target);
   return (
     <AuthShell
       title="Welcome back"
-      subtitle={why === "members" ? "This part is for members. Sign in, or create a free account in a minute." : "Pick up your streak where you left it."}
+      subtitle={idle ? "You were signed out after a long time away, to keep your account safe. Sign in to pick up where you left off." : why === "members" ? "This part is for members. Sign in, or create a free account in a minute." : "Pick up your streak where you left it."}
       footer={
         <>
           New here?{" "}

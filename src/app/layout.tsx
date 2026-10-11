@@ -3,6 +3,7 @@ import { Inter, Outfit } from "next/font/google";
 import { Backdrop } from "@/components/Backdrop";
 import { CampaignCapture } from "@/components/CampaignCapture";
 import { DailyCheckIn } from "@/components/DailyCheckIn";
+import { IdleGuard } from "@/components/IdleGuard";
 import { NewsletterPrompt } from "@/components/NewsletterPrompt";
 import { ProgressProvider } from "@/components/ProgressProvider";
 import { ToastHost } from "@/components/ToastHost";
@@ -13,6 +14,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { Tracker } from "@/components/Tracker";
 import { getCurrentProfile, todayFor } from "@/lib/current-profile";
 import { isDemoEnabled } from "@/lib/env";
+import { idleMinutes } from "@/lib/idle";
 import { liveStreak } from "@/lib/platform/dates";
 import { getStore } from "@/lib/platform/store";
 import { safely } from "@/lib/safe";
@@ -86,6 +88,7 @@ export default async function RootLayout({
         />
         <ToastHost />
         {user ? <DailyCheckIn userId={user.id} /> : null}
+        {user ? <IdleGuard mode={user.mode} minutes={idleMinutes()} /> : null}
         <NewsletterPrompt signedIn={Boolean(user)} />
         <div className="page-scroll">
           <ProgressProvider userId={user?.id ?? null} serverLessons={serverLessons}>
