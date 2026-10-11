@@ -42,3 +42,6 @@ Light, airy, Apple-like. Soft pastel gradient washes, frosted-glass white cards,
 - `intro-landscape-light.gif`: 960 px loop for chats and docs.
 
 The animation: the tile appears, the mint and coral pieces slide in, the yellow piece drops and clicks into place, the spark pops, the mark glides aside and the wordmark arrives, the coral full stop pops and then breathes gently. To regenerate or change it, see `brand/video/README.md`.
+
+## Brand film
+`video/film/`: a 30 s brand film (five AI scenes, voiceover, captions, ending on the logo intro). The README there has the link, the shot list and how to rebuild it.
