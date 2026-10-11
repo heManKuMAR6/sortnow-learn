@@ -311,6 +311,13 @@ export const supabaseStore: Store = {
     };
   },
 
+  async triesToday(_id, slug) {
+    const supabase = await db();
+    const { data, error } = await supabase.rpc("challenge_tries_today", { p_slug: slug });
+    if (error) fail(error);
+    return typeof data === "number" ? data : 0;
+  },
+
   async deleteAccount(id) {
     const supabase = await db();
     // Best effort: the picture is not covered by the cascade.

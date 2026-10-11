@@ -3,6 +3,9 @@ import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'fs';
 import http from 'http';
 import { createRequire } from 'module';
+import { loadTs } from '../../scripts/load-ts.mjs';
+const { getChallenge } = await loadTs('src/lib/challenges.ts');
+const GOOD = getChallenge('write-a-better-prompt').questions.map((q) => q.answer);
 const require = createRequire(new URL('../../package.json', import.meta.url));
 const { createClient } = require('@supabase/supabase-js');
 
@@ -53,9 +56,9 @@ let { data, error } = await supabase.rpc('set_timezone',{ p_tz:'America/Chicago'
 ({ data, error } = await supabase.rpc('checkin')); ok(!error&&rows(data).o_awarded===false,'checkin twice in a day -> not awarded');
 ({ data, error } = await supabase.rpc('complete_lesson',{ p_slug:'what-a-neural-network-is' })); r=rows(data); ok(!error&&r.o_awarded&&r.o_gained===5&&r.o_points===6,'complete_lesson: awarded, gained 5, points 6');
 ({ data, error } = await supabase.rpc('complete_lesson',{ p_slug:'nope' })); ok(!!error&&/unknown lesson/i.test(error.message),'complete_lesson(unknown) -> error the store maps to 404: '+error?.message);
-({ data, error } = await supabase.rpc('submit_challenge',{ p_slug:'write-a-better-prompt', p_answers:[1,1,1,1] })); r=rows(data);
+({ data, error } = await supabase.rpc('submit_challenge',{ p_slug:'write-a-better-prompt', p_answers:GOOD })); r=rows(data);
 ok(!error&&r.o_passed&&r.o_awarded&&r.o_gained===20&&Array.isArray(r.o_correct)&&r.o_correct.every(Number.isInteger)&&r.o_correct.length===4,'submit_challenge: passed, +20, o_correct is number[4]');
-({ data, error } = await supabase.rpc('submit_challenge',{ p_slug:'write-a-better-prompt', p_answers:[1,1,1,1] })); r=rows(data); ok(!error&&r.o_passed&&!r.o_awarded&&r.o_gained===0,'replay: passed, not paid again');
+({ data, error } = await supabase.rpc('submit_challenge',{ p_slug:'write-a-better-prompt', p_answers:GOOD })); r=rows(data); ok(!error&&r.o_passed&&!r.o_awarded&&r.o_gained===0,'replay: passed, not paid again');
 ({ data, error } = await supabase.rpc('submit_challenge',{ p_slug:'write-a-better-prompt', p_answers:[1] })); ok(!!error&&/wrong number of answers/i.test(error.message),'wrong answer count -> error the store maps to 400');
 ({ data, error } = await supabase.rpc('submit_challenge',{ p_slug:'invented', p_answers:[0,0,0,0] })); ok(!!error&&/unknown challenge/i.test(error.message),'invented challenge -> error');
 ({ data, error } = await supabase.rpc('delete_my_account')); ok(!error,'delete_my_account runs');

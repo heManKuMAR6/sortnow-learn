@@ -5,17 +5,7 @@
 // then paste supabase/schema.sql into the Supabase SQL editor again.
 import { readFileSync, writeFileSync } from "node:fs";
 
-const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
-const strip = (src) => src.replace(/^import .*$/gm, "");
-
-// The content files are plain data. Evaluate them with their TypeScript types removed.
-async function load(path) {
-  const { transform } = await import("node:module").then((m) => m);
-  void transform;
-  const ts = await import("typescript").then((m) => m.default ?? m);
-  const js = ts.transpileModule(strip(read(path)), { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
-  return import(`data:text/javascript;base64,${Buffer.from(js).toString("base64")}`);
-}
+import { loadTs as load } from "./load-ts.mjs";
 
 const { challenges } = await load("src/lib/challenges.ts");
 const { lessons } = await load("src/lib/content.ts");

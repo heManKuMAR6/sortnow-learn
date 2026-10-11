@@ -48,7 +48,7 @@ ok(c1.checkin.streak===0&&c1.lessonPoints===5,'a forged day adds no streak; inve
 for (const d of ['2026-01-01','2099-12-31','1999-01-01']) { const c=await (await rctx.request.post(B+'/api/checkin',{data:{day:d,tz:'UTC'}})).json(); ok(!c.checkin.awarded&&c.checkin.streak===0,`submitting day ${d} cannot add a streak day`); }
 ok((await rctx.request.post(B+'/api/progress/lesson',{data:{slug:'made-up'}})).status()===404,'invented lesson slug -> 404');
 ok((await rctx.request.post(B+'/api/challenges/made-up',{data:{answers:[0,0,0,0]}})).status()===404,'invented challenge slug -> 404');
-ok((await rctx.request.post(B+'/api/challenges/write-a-better-prompt',{data:{answers:[9,9,9,9]}})).status()===400,'out-of-range answers -> 400');
+ok((await rctx.request.post(B+'/api/challenges/write-a-better-prompt',{data:{answers:[100000,100000,100000,100000]}})).status()===400 && (await rctx.request.post(B+'/api/challenges/write-a-better-prompt',{data:{answers:[-1,0,0,0]}})).status()===400,'out-of-range answers -> 400');
 const wrong=await (await rctx.request.post(B+'/api/challenges/write-a-better-prompt',{data:{answers:[0,0,0,0]}})).json(); ok(!wrong.passed&&wrong.gained===0,'wrong answers earn nothing');
 
 // ===== 6. progress: isolation between accounts, server truth across devices, no undo
@@ -69,13 +69,13 @@ ok(!(await gr.text()).includes('Mark as complete'),'no lesson content in the red
 
 
 // ===== 7. challenges: members only, three tries a day, answers hidden until pass or the last try, streak only from today's puzzle
-const { challenges, dailyChallenge } = await import('../../src/lib/challenges.ts');
+const { challenges, dailyChallenge } = await (await import('../../scripts/load-ts.mjs')).loadTs('src/lib/challenges.ts');
 const anonCh=await (await ctxOf()).request.post(B+'/api/challenges/write-a-better-prompt',{data:{answers:[1,1,1,1]}}); ok(anonCh.status()===401,'a signed-out visitor cannot submit a challenge (401)');
 const gate2=await (await ctxOf()).request.get(B+'/challenges',{maxRedirects:0}); ok(gate2.status()===307,'signed-out /challenges is sent to sign in');
 const ectx=await ctxOf(); await signup(ectx,'Eve Earner',`eve${stamp}@example.com`);
 const today=new Intl.DateTimeFormat('en-CA',{timeZone:'UTC'}).format(new Date());
 const daily=dailyChallenge(today); const other=challenges.find(c=>c.slug!==daily.slug);
-const wrongA=daily.questions.map(q=>(q.answer+1)%q.options.length), rightA=daily.questions.map(q=>q.answer);
+const wrongA=daily.questions.map(q=>q.answer+1), rightA=daily.questions.map(q=>q.answer);
 const post=(c,slug,answers)=>c.request.post(B+'/api/challenges/'+slug,{data:{answers}});
 let r1=await (await post(ectx,daily.slug,wrongA)).json(); ok(!r1.passed&&r1.attemptsLeft===2&&r1.results.length===0,'a miss shows no answers and counts the tries down');
 let r2=await (await post(ectx,daily.slug,wrongA)).json(); ok(r2.attemptsLeft===1&&r2.results.length===0,'second miss: still no answers');

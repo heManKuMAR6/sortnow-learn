@@ -5,7 +5,7 @@ import { ChallengeCard } from "@/components/ChallengeCard";
 import { PuzzleMark } from "@/components/PuzzleMark";
 import { Reveal } from "@/components/Reveal";
 import { Stagger, StaggerItem } from "@/components/Stagger";
-import { challenges, dailyChallenge } from "@/lib/challenges";
+import { challenges, dailyChallenge, summarize } from "@/lib/challenges";
 import { lessonsFor, lessons, tracks, weeklyNotesNewestFirst } from "@/lib/content";
 import { getCurrentProfile, todayFor } from "@/lib/current-profile";
 import { safely } from "@/lib/safe";
@@ -121,7 +121,7 @@ export default async function HomePage() {
       <section className="section-gap">
         <Reveal>
           <p className="eyebrow mb-3">Today&apos;s challenge</p>
-          <ChallengeCard challenge={featured} result={done[featured.slug]} featured />
+          <ChallengeCard challenge={summarize(featured)} result={done[featured.slug]} featured />
           <p className="mt-4 text-sm">
             <Link href="/challenges" data-track="home-all-challenges" className="text-link">
               See all {challenges.length} challenges →

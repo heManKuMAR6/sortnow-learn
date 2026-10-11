@@ -203,6 +203,12 @@ export const demoStore: Store = {
     return { ...base, awarded: true, gained: challenge.points, points: p.points + challenge.points, streak: profile.streak, streakDay };
   },
 
+  async triesToday(id, slug) {
+    const doc = await demoDoc();
+    const day = todayIn(doc.private[id]?.timezone ?? "UTC");
+    return doc.attempts[`${id}|${slug}|${day}`] ?? 0;
+  },
+
   async deleteAccount(id) {
     const doc = await demoDoc();
     delete doc.profiles[id];

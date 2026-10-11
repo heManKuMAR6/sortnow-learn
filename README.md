@@ -66,6 +66,14 @@ Members are signed out after **3 hours without using the site**, then sent to th
 - Set `APP_SECRET` in Vercel: it signs the activity cookie (without it a weaker fallback key is used, and `/status` says so).
 - Watching a long video without touching the page counts as quiet, since the video plays in its own frame. The warning appears first and one click keeps the session.
 
+## Challenges and lessons: how they play
+
+Challenges open on a short story, then mix five question formats: **pick one**, **spot it** (tap the odd line in a chat bubble or plan), **sort it** (cards into buckets), **put in order** (drag, or use the arrow buttons), and **fill the gaps**. Each challenge has 3 tries a day, shown as hearts. Answers stay hidden until you pass or use the last try. A pass triggers confetti, a counting-up score, the streak flame when the day counts, and a share button. Sound is off until the learner turns it on, and every effect respects "reduce motion".
+
+Lessons are a guided flow: a predict-first question, the video, flip cards (idea on the front, analogy on the back), quick checks with instant feedback, then claiming the 5 points. The exact notes from the video stay one click away.
+
+**Writing content.** Challenges are in `src/lib/challenges.ts` and the lesson cards and checks in `src/lib/lesson-quests.ts`. Use the helpers `choice`, `spot`, `sort`, `order` and `fill` from `src/lib/question-types.ts`: you write what is right (which bucket, which order) and the helper turns it into the single number the database grades. Multiple-choice options are shuffled by a fixed recipe, so you can list them in any order. **After editing any question text, run `npm run gen:catalog` and apply the new answers to the database**, because changing a multiple-choice question's text changes its shuffled answer slot. `node tests/unit/content.test.mjs` checks every question is well formed and that no answer leaks to the browser.
+
 ## Run locally
 
 ```bash
