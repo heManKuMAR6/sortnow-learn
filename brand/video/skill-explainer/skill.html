@@ -1,0 +1,153 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Outfit;src:url(Outfit.ttf)}@font-face{font-family:Inter;src:url(Inter.ttf)}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:transparent}
+#st{position:absolute;inset:0;font-family:Inter;color:#1D1D1F}
+.a{position:absolute;will-change:transform,opacity}
+#bg{position:absolute;inset:0;background:#FBFBFD;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}
+.eb{font-family:Outfit;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:#FF6F61;font-size:30px}
+.h{font-family:Outfit;font-weight:300;color:#1F6F8B;letter-spacing:-.02em;line-height:1.05}
+.c{color:#FF6F61}
+.chip{width:170px;height:170px;border-radius:50%;background:#fff;box-shadow:0 18px 40px rgba(31,111,139,.16);display:flex;align-items:center;justify-content:center}
+.chip svg{width:86px;height:86px}
+.lab{font-size:30px;color:#6E6E73;text-align:center;width:240px;margin-left:-35px;margin-top:22px}
+.card{background:rgba(255,255,255,.92);border:2px solid #fff;border-radius:44px;box-shadow:0 30px 70px rgba(31,111,139,.16)}
+.bub{position:absolute;right:48px;max-width:640px;padding:26px 34px;border-radius:36px 36px 10px 36px;background:#1F6F8B;color:#fff;font-size:36px;line-height:1.3}
+.bub.ai{right:auto;left:48px;background:#EEF4F6;color:#1D1D1F;border-radius:36px 36px 36px 10px}
+.row{position:absolute;left:56px;right:56px;height:110px;display:flex;align-items:center;gap:30px;font-size:40px}
+.box{width:64px;height:64px;border-radius:20px;border:4px solid #8FDDE7;flex:none;position:relative}
+.box svg{position:absolute;inset:-4px;width:64px;height:64px}
+.pill{background:#fff;border-radius:60px;padding:30px 46px;font-size:40px;box-shadow:0 20px 50px rgba(31,111,139,.15);white-space:nowrap}
+</style></head><body><div id="st">
+<div id="bg"><div class="blob" id="b1" style="width:700px;height:700px;background:#8FDDE7"></div><div class="blob" id="b2" style="width:600px;height:600px;background:#FF6F61;opacity:.22"></div><div class="blob" id="b3" style="width:640px;height:640px;background:#FFD166;opacity:.35"></div></div>
+
+<!-- A: hook -->
+<div class="a eb" id="aEb" style="top:300px;width:1080px;text-align:center">sortNow Learn · in 15 seconds</div>
+<div class="a" id="ch0" style="left:220px;top:470px"><div class="chip"><svg viewBox="0 0 24 24" fill="#D97757"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg></div><div class="lab">Claude</div></div>
+<div class="a" id="ch1" style="left:455px;top:470px"><div class="chip"><svg viewBox="0 0 24 24" fill="#111"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg></div><div class="lab">ChatGPT</div></div>
+<div class="a" id="ch2" style="left:690px;top:470px"><div class="chip"><svg viewBox="0 0 24 24" fill="#111"><path d="M23.922 16.997C23.061 18.492 18.063 22.02 12 22.02 5.937 22.02.939 18.492.078 16.997A.641.641 0 0 1 0 16.741v-2.869a.883.883 0 0 1 .053-.22c.372-.935 1.347-2.292 2.605-2.656.167-.429.414-1.055.644-1.517a10.098 10.098 0 0 1-.052-1.086c0-1.331.282-2.499 1.132-3.368.397-.406.89-.717 1.474-.952C7.255 2.937 9.248 1.98 11.978 1.98c2.731 0 4.767.957 6.166 2.093.584.235 1.077.546 1.474.952.85.869 1.132 2.037 1.132 3.368 0 .368-.014.733-.052 1.086.23.462.477 1.088.644 1.517 1.258.364 2.233 1.721 2.605 2.656a.841.841 0 0 1 .053.22v2.869a.641.641 0 0 1-.078.256Zm-11.75-5.992h-.344a4.359 4.359 0 0 1-.355.508c-.77.947-1.918 1.492-3.508 1.492-1.725 0-2.989-.359-3.782-1.259a2.137 2.137 0 0 1-.085-.104L4 11.746v6.585c1.435.779 4.514 2.179 8 2.179 3.486 0 6.565-1.4 8-2.179v-6.585l-.098-.104s-.033.045-.085.104c-.793.9-2.057 1.259-3.782 1.259-1.59 0-2.738-.545-3.508-1.492a4.359 4.359 0 0 1-.355-.508Zm2.328 3.25c.549 0 1 .451 1 1v2c0 .549-.451 1-1 1-.549 0-1-.451-1-1v-2c0-.549.451-1 1-1Zm-5 0c.549 0 1 .451 1 1v2c0 .549-.451 1-1 1-.549 0-1-.451-1-1v-2c0-.549.451-1 1-1Zm3.313-6.185c.136 1.057.403 1.913.878 2.497.442.544 1.134.938 2.344.938 1.573 0 2.292-.337 2.657-.751.384-.435.558-1.15.558-2.361 0-1.14-.243-1.847-.705-2.319-.477-.488-1.319-.862-2.824-1.025-1.487-.161-2.192.138-2.533.529-.269.307-.437.808-.438 1.578v.021c0 .265.021.562.063.893Zm-1.626 0c.042-.331.063-.628.063-.894v-.02c-.001-.77-.169-1.271-.438-1.578-.341-.391-1.046-.69-2.533-.529-1.505.163-2.347.537-2.824 1.025-.462.472-.705 1.179-.705 2.319 0 1.211.175 1.926.558 2.361.365.414 1.084.751 2.657.751 1.21 0 1.902-.394 2.344-.938.475-.584.742-1.44.878-2.497Z"/></svg></div><div class="lab">Copilot</div></div>
+<div class="a h" id="aH1" style="top:860px;width:1080px;text-align:center;font-size:120px">What's an</div>
+<div class="a h" id="aH2" style="top:990px;width:1080px;text-align:center;font-size:170px">AI <span style="position:relative">skill<span id="aU" style="position:absolute;left:0;bottom:6px;height:22px;background:#FFD166;border-radius:11px;z-index:-1;opacity:.85"></span></span><span class="c">?</span></div>
+
+<!-- B: without -->
+<div class="a eb" id="bEb" style="top:250px;width:1080px;text-align:center">Without a skill</div>
+<div class="a h" id="bH" style="top:310px;width:1080px;text-align:center;font-size:92px">You repeat yourself<span class="c">.</span></div>
+<div class="a card" id="bP" style="left:90px;top:520px;width:900px;height:900px;overflow:hidden">
+ <div id="bS" class="a" style="left:0;top:0;width:900px;height:900px">
+  <div class="bub" id="q0" style="top:60px">Write the weekly report…</div>
+  <div class="bub ai" id="r0" style="top:200px">Sure! Which format?</div>
+  <div class="bub" id="q1" style="top:340px">Our template. Like last time.</div>
+  <div class="bub ai" id="r1" style="top:480px">What tone should I use?</div>
+  <div class="bub" id="q2" style="top:620px">Short and friendly… again.</div>
+  <div class="bub" id="q3" style="top:760px">And add the 3 numbers!</div>
+ </div></div>
+<div class="a" id="bL" style="left:820px;top:1330px;width:170px;height:170px;border-radius:50%;background:#FF6F61;box-shadow:0 20px 40px rgba(255,111,97,.35);display:flex;align-items:center;justify-content:center">
+ <svg id="bLs" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></div>
+<div class="a" id="bN" style="left:620px;top:1375px;width:180px;text-align:right;font-family:Outfit;font-weight:600;font-size:56px;color:#FF6F61">×1</div>
+
+<!-- C: skill card -->
+<div class="a eb" id="cEb" style="top:250px;width:1080px;text-align:center;color:#1F6F8B">With a skill</div>
+<div class="a h" id="cH" style="top:310px;width:1080px;text-align:center;font-size:92px">Save the steps once<span class="c">.</span></div>
+<div class="a card" id="cC" style="left:110px;top:560px;width:860px;height:760px">
+ <div style="position:absolute;left:56px;top:56px;display:flex;gap:30px;align-items:center"><img src="mark.png" style="width:120px;height:120px;border-radius:30px">
+  <div><div style="font-family:Outfit;font-weight:500;font-size:54px">Weekly report</div><div style="font-size:32px;color:#76767A;margin-top:6px">a skill · saved once</div></div></div>
+ <div style="position:absolute;left:56px;right:56px;top:226px;height:3px;background:#EEF1F4"></div>
+ <div class="row" id="r_0" style="top:270px"><div class="box"><svg viewBox="0 0 64 64"><rect id="bx0" x="0" y="0" width="64" height="64" rx="20" fill="#8FDDE7" opacity="0"/><path id="tk0" d="M17 33l10 10 20-22" fill="none" stroke="#1F6F8B" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="60" stroke-dashoffset="60"/></svg></div><span>Pull this week's numbers</span></div>
+ <div class="row" id="r_1" style="top:400px"><div class="box"><svg viewBox="0 0 64 64"><rect id="bx1" x="0" y="0" width="64" height="64" rx="20" fill="#8FDDE7" opacity="0"/><path id="tk1" d="M17 33l10 10 20-22" fill="none" stroke="#1F6F8B" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="60" stroke-dashoffset="60"/></svg></div><span>Use our report template</span></div>
+ <div class="row" id="r_2" style="top:530px"><div class="box"><svg viewBox="0 0 64 64"><rect id="bx2" x="0" y="0" width="64" height="64" rx="20" fill="#8FDDE7" opacity="0"/><path id="tk2" d="M17 33l10 10 20-22" fill="none" stroke="#1F6F8B" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="60" stroke-dashoffset="60"/></svg></div><span>Keep it short and friendly</span></div>
+</div>
+<div class="a" id="cR" style="top:1400px;width:1080px;text-align:center;font-size:40px;color:#6E6E73">like a recipe card for your AI</div>
+
+<!-- D: over the 3D clip -->
+<div class="a card" id="dC" style="left:110px;top:1300px;width:860px;height:230px;text-align:center">
+ <div class="eb" style="margin-top:46px">Automatic</div><div class="h" style="font-size:58px;margin-top:20px">Loaded only when needed<span class="c">.</span></div></div>
+
+<!-- E: flow -->
+<div class="a pill" id="e1" style="left:540px;top:300px">💬 “Do this week's report”</div>
+<svg class="a" id="eA1" style="left:500px;top:430px" width="80" height="170" viewBox="0 0 80 170"><path id="eA1p" d="M40 6 V150" stroke="#1F6F8B" stroke-width="8" stroke-linecap="round" fill="none" stroke-dasharray="150" stroke-dashoffset="150"/><path id="eA1h" d="M18 136 L40 160 L62 136" stroke="#1F6F8B" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0"/></svg>
+<div class="a" id="e2" style="left:390px;top:620px;width:300px;height:300px;border-radius:84px;background:linear-gradient(135deg,#2A8CAE,#1B607A);box-shadow:0 30px 70px rgba(31,111,139,.35)">
+ <div style="position:absolute;left:98px;top:38px;width:104px;height:104px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(0,0,0,.15)"><svg viewBox="0 0 24 24" width="60" height="60" fill="#D97757"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg></div><div style="position:absolute;left:38px;top:152px;width:104px;height:104px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(0,0,0,.15)"><svg viewBox="0 0 24 24" width="60" height="60" fill="#111"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg></div><div style="position:absolute;left:158px;top:152px;width:104px;height:104px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(0,0,0,.15)"><svg viewBox="0 0 24 24" width="60" height="60" fill="#111"><path d="M23.922 16.997C23.061 18.492 18.063 22.02 12 22.02 5.937 22.02.939 18.492.078 16.997A.641.641 0 0 1 0 16.741v-2.869a.883.883 0 0 1 .053-.22c.372-.935 1.347-2.292 2.605-2.656.167-.429.414-1.055.644-1.517a10.098 10.098 0 0 1-.052-1.086c0-1.331.282-2.499 1.132-3.368.397-.406.89-.717 1.474-.952C7.255 2.937 9.248 1.98 11.978 1.98c2.731 0 4.767.957 6.166 2.093.584.235 1.077.546 1.474.952.85.869 1.132 2.037 1.132 3.368 0 .368-.014.733-.052 1.086.23.462.477 1.088.644 1.517 1.258.364 2.233 1.721 2.605 2.656a.841.841 0 0 1 .053.22v2.869a.641.641 0 0 1-.078.256Zm-11.75-5.992h-.344a4.359 4.359 0 0 1-.355.508c-.77.947-1.918 1.492-3.508 1.492-1.725 0-2.989-.359-3.782-1.259a2.137 2.137 0 0 1-.085-.104L4 11.746v6.585c1.435.779 4.514 2.179 8 2.179 3.486 0 6.565-1.4 8-2.179v-6.585l-.098-.104s-.033.045-.085.104c-.793.9-2.057 1.259-3.782 1.259-1.59 0-2.738-.545-3.508-1.492a4.359 4.359 0 0 1-.355-.508Zm2.328 3.25c.549 0 1 .451 1 1v2c0 .549-.451 1-1 1-.549 0-1-.451-1-1v-2c0-.549.451-1 1-1Zm-5 0c.549 0 1 .451 1 1v2c0 .549-.451 1-1 1-.549 0-1-.451-1-1v-2c0-.549.451-1 1-1Zm3.313-6.185c.136 1.057.403 1.913.878 2.497.442.544 1.134.938 2.344.938 1.573 0 2.292-.337 2.657-.751.384-.435.558-1.15.558-2.361 0-1.14-.243-1.847-.705-2.319-.477-.488-1.319-.862-2.824-1.025-1.487-.161-2.192.138-2.533.529-.269.307-.437.808-.438 1.578v.021c0 .265.021.562.063.893Zm-1.626 0c.042-.331.063-.628.063-.894v-.02c-.001-.77-.169-1.271-.438-1.578-.341-.391-1.046-.69-2.533-.529-1.505.163-2.347.537-2.824 1.025-.462.472-.705 1.179-.705 2.319 0 1.211.175 1.926.558 2.361.365.414 1.084.751 2.657.751 1.21 0 1.902-.394 2.344-.938.475-.584.742-1.44.878-2.497Z"/></svg></div></div>
+<div class="a" id="e2l" style="top:940px;width:1080px;text-align:center;font-size:36px;color:#6E6E73">your AI assistant</div>
+<div class="a card" id="e3" style="left:770px;top:680px;width:250px;height:180px;border-radius:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px"><img src="mark.png" style="width:84px;height:84px;border-radius:22px"><div style="font-family:Outfit;font-weight:500;font-size:34px;color:#1F6F8B">+ skill</div></div>
+<svg class="a" id="eA2" style="left:500px;top:1000px" width="80" height="170" viewBox="0 0 80 170"><path id="eA2p" d="M40 6 V150" stroke="#1F6F8B" stroke-width="8" stroke-linecap="round" fill="none" stroke-dasharray="150" stroke-dashoffset="150"/><path id="eA2h" d="M18 136 L40 160 L62 136" stroke="#1F6F8B" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0"/></svg>
+<div class="a pill" id="e4" style="left:540px;top:1190px;background:#8FDDE7;color:#1D1D1F"><b style="color:#1F6F8B">✓</b> Done, your way</div>
+<div class="a h" id="e5" style="top:1420px;width:1080px;text-align:center;font-size:110px">Every time<span class="c">.</span></div>
+<div class="a" id="e6" style="top:1580px;width:1080px;display:flex;justify-content:center;gap:40px;font-size:60px;color:#1F6F8B"><span id="k0">✓</span><span id="k1">✓</span><span id="k2">✓</span></div>
+
+<!-- F: end card -->
+<img class="a" id="fM" src="mark.png" style="left:390px;top:620px;width:300px;height:300px;border-radius:70px;box-shadow:0 30px 70px rgba(31,111,139,.3)">
+<div class="a" id="fW" style="top:980px;width:1080px;text-align:center"><div style="font-family:Outfit;font-weight:600;font-size:120px;letter-spacing:-.04em">sortNow</div><div style="font-family:Outfit;font-weight:300;font-size:96px;color:#6E6E73;margin-top:-18px;margin-left:60px">Learn<span class="c">.</span></div></div>
+<div class="a" id="fT" style="top:1300px;width:1080px;text-align:center;font-size:42px;color:#6E6E73">Learn AI in small pieces · learn.sortnow.co</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const cl=x=>Math.max(0,Math.min(1,x));
+const eo=x=>1-Math.pow(1-cl(x),3);               // ease-out cubic
+const eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const back=x=>{x=cl(x);const c1=1.6,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const prog=(t,a,d)=>cl((t-a)/d);
+// scene starts (overridden from the voiceover timing)
+let S=Object.assign({B:2.0,C:4.7,D:8.2,E:10.6,F:13.9,END:15.2},window.SCENES||{});
+function vis(t,a,b,fi=.35,fo=.3){ // in at a, out at b
+  return Math.min(eo((t-a)/fi), 1-eio((t-(b-fo))/fo)); }
+function set(id,o,x=0,y=0,s=1,r=0){const e=$(id);e.style.opacity=o;e.style.transform=`translate(${x}px,${y}px) scale(${s}) rotate(${r}deg)`}
+function setT(t){
+ // background: drifting blobs; transparent during the 3D clip
+ $('b1').style.transform=`translate(${-200+120*Math.sin(t*.5)}px,${-150+80*Math.cos(t*.4)}px)`;
+ $('b2').style.transform=`translate(${620+90*Math.cos(t*.45)}px,${700+120*Math.sin(t*.35)}px)`;
+ $('b3').style.transform=`translate(${-120+100*Math.sin(t*.3+1)}px,${1350+90*Math.cos(t*.5)}px)`;
+ const bgo=Math.min(1-eio((t-(S.D-.35))/.35), eio((t-(S.E-.05))/.4)) ; $('bg').style.opacity= t<S.D-.35||t>S.E+.35?1:Math.max(0,bgo);
+ // A
+ const aOut=S.B;
+ set('aEb',vis(t,.05,aOut),0,30*(1-eo(t/.5)));
+ for(let i=0;i<3;i++){const p=prog(t,.15+i*.14,.55);set('ch'+i,vis(t,.15+i*.14,aOut,.2),0,14*Math.sin(t*2+i)-40*(1-eo(p)),back(p))}
+ set('aH1',vis(t,.55,aOut),0,60*(1-eo(prog(t,.55,.6))));
+ set('aH2',vis(t,.75,aOut),0,60*(1-eo(prog(t,.75,.6))),.92+.08*eo(prog(t,.75,.6)));
+ $('aU').style.width=(100*eo(prog(t,1.25,.5)))+'%';
+ // B
+ const B=S.B,Bo=S.C;
+ set('bEb',vis(t,B,Bo),0,30*(1-eo(prog(t,B,.5))));
+ set('bH',vis(t,B+.08,Bo),0,40*(1-eo(prog(t,B+.08,.5))));
+ const pin=prog(t,B+.1,.5);set('bP',vis(t,B+.1,Bo),0,80*(1-eo(pin)),(.94+.06*eo(pin))*(1-.06*eio(prog(t,Bo-.3,.3))));
+ const steps=['q0','r0','q1','r1','q2','q3'],dt=(Bo-B-.7)/6;
+ steps.forEach((id,i)=>{const p=prog(t,B+.35+i*dt,.35);set(id,eo(p),0,40*(1-eo(p)),.9+.1*back(p))});
+ const shown=Math.max(0,Math.floor((t-B-.35)/dt)+1);
+ $('bS').style.transform=`translateY(${-120*eio(prog(t,B+.35+4*dt,.5))}px)`;
+ const lp=prog(t,B+.4,.5);set('bL',vis(t,B+.4,Bo),0,0,back(lp));$('bLs').style.transform=`rotate(${-t*260}deg)`;
+ const qn=steps.slice(0,Math.min(6,shown)).filter(s=>s[0]=='q').length;$('bN').textContent='×'+Math.max(1,qn);
+ set('bN',vis(t,B+.5,Bo),0,0,1+.25*Math.max(0,1-((t-B-.35)%dt)/.25)*(shown>0?1:0));
+ // C
+ const C=S.C,Co=S.D;
+ set('cEb',vis(t,C,Co-.2),0,30*(1-eo(prog(t,C,.5))));
+ set('cH',vis(t,C+.08,Co-.2),0,40*(1-eo(prog(t,C+.08,.5))));
+ const cin=prog(t,C+.15,.6),cout=prog(t,Co-.55,.55);
+ set('cC',vis(t,C+.15,Co,.4,.35),0,100*(1-eo(cin))+180*eio(cout),(.9+.1*back(cin))*(1-.45*eio(cout)),-3*(1-eo(cin)));
+ const rd=(Co-C-1.3)/3;
+ for(let i=0;i<3;i++){const p=prog(t,C+.55+i*rd,.35);set('r_'+i,eo(p),40*(1-eo(p)),0);
+  const k=prog(t,C+.75+i*rd,.3);$('bx'+i).setAttribute('opacity',eo(k));$('tk'+i).setAttribute('stroke-dashoffset',60*(1-eo(k)))}
+ set('cR',vis(t,C+1.2,Co-.3),0,20*(1-eo(prog(t,C+1.2,.4))));
+ // D
+ const D=S.D,Do=S.E;
+ const dp=prog(t,D+.35,.5);set('dC',vis(t,D+.35,Do+.05,.4,.3),0,60*(1-eo(dp)),.95+.05*back(dp));
+ // E
+ const E=S.E,Eo=S.F;
+ const p1=prog(t,E+.05,.45);set('e1',vis(t,E+.05,Eo),-0.5*$('e1').offsetWidth,40*(1-eo(p1)),.9+.1*back(p1));
+ $('eA1p').setAttribute('stroke-dashoffset',150*(1-eio(prog(t,E+.35,.35))));$('eA1h').setAttribute('opacity',eo(prog(t,E+.6,.15)));set('eA1',vis(t,E+.3,Eo));
+ const p2=prog(t,E+.55,.5);set('e2',vis(t,E+.55,Eo),0,0,back(p2)*(1+.04*Math.sin(t*6)*eo(prog(t,E+1.25,.3))));
+ set('e2l',vis(t,E+.75,Eo));
+ const p3=prog(t,E+.85,.5);set('e3',vis(t,E+.85,Eo),260*(1-eio(p3))-170*eio(prog(t,E+1.35,.35)),0,1-.35*eio(prog(t,E+1.35,.35)));
+ if(t>E+1.7){$('e3').style.opacity=1-eo(prog(t,E+1.65,.2))}
+ $('e2').style.boxShadow=`0 30px 70px rgba(31,111,139,.35),0 0 ${120*eo(prog(t,E+1.6,.3))*(1-prog(t,E+2.2,.6))}px rgba(255,209,102,.9)`;
+ $('eA2p').setAttribute('stroke-dashoffset',150*(1-eio(prog(t,E+1.7,.35))));$('eA2h').setAttribute('opacity',eo(prog(t,E+1.95,.15)));set('eA2',vis(t,E+1.65,Eo));
+ const p4=prog(t,E+1.95,.45);set('e4',vis(t,E+1.95,Eo),-0.5*$('e4').offsetWidth,30*(1-eo(p4)),.9+.1*back(p4));
+ set('e5',vis(t,E+2.15,Eo),0,40*(1-eo(prog(t,E+2.15,.5))));
+ for(let i=0;i<3;i++){const p=prog(t,E+2.35+i*.12,.35);$('k'+i).style.display='inline-block';$('k'+i).style.transform=`scale(${back(p)})`;$('k'+i).style.opacity=eo(p)}
+ set('e6',vis(t,E+2.3,Eo));
+ // F
+ const F=S.F,pf=prog(t,F+.1,.6);
+ set('fM',eo(pf),0,0,.6+.4*back(pf),-12*(1-eo(pf)));
+ set('fW',eo(prog(t,F+.45,.5)),0,40*(1-eo(prog(t,F+.45,.5))));
+ set('fT',eo(prog(t,F+.75,.5)),0,20*(1-eo(prog(t,F+.75,.5))));
+}
+window.setT=setT;
+</script></body></html>
