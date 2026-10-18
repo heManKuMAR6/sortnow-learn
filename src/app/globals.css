@@ -544,12 +544,14 @@ textarea.field {
 
 .ig-layout {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 2.75rem;
   align-items: start;
 }
 
 .ig-read {
   max-width: 40rem;
+  min-width: 0;
 }
 
 .reel-still {
@@ -591,6 +593,23 @@ textarea.field {
   font-size: 0.95rem;
   line-height: 1.55;
   color: var(--color-soft-charcoal);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* A whole file (e.g. SKILL.md): keep its lines as written and scroll inside the block. */
+.prompt-block.prompt-file {
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+}
+
+.prompt-path {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
 }
 
 @media (min-width: 900px) {

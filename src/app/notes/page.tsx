@@ -5,6 +5,7 @@ import { hasNotesAccess } from "@/lib/gate";
 import { Reveal } from "@/components/Reveal";
 import { Stagger, StaggerItem } from "@/components/Stagger";
 import { postsNewestFirst } from "@/lib/content";
+import { igPostsNewestFirst } from "@/lib/ig-posts";
 import { formatDay } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 export default async function NotesPage() {
   if (!(await hasNotesAccess())) return <NotesGate next="/notes" />;
   const posts = postsNewestFirst();
+  const featured = igPostsNewestFirst().filter((drop) => drop.notesCard);
   return (
     <div>
       <Reveal>
@@ -35,6 +37,22 @@ export default async function NotesPage() {
           </Link>
         </p>
       </Reveal>
+      {featured.length ? (
+        <Reveal className="mt-10 grid gap-5" delay={0.05}>
+          {featured.map((drop) => (
+            <article key={drop.slug} className="glass grid gap-4 p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-7">
+              <div>
+                <p className="eyebrow">{drop.notesCard?.eyebrow}</p>
+                <h2 className="mt-2 text-3xl">{drop.notesCard?.title}</h2>
+                <p className="mt-2 max-w-xl text-secondary">{drop.notesCard?.text}</p>
+              </div>
+              <Link href={`/ig/${drop.slug}`} data-track={`notes-${drop.slug}`} className="pill-teal pill-lg text-center">
+                Open the {drop.notesCard?.eyebrow.toLowerCase()} drop
+              </Link>
+            </article>
+          ))}
+        </Reveal>
+      ) : null}
       <Stagger className="mt-10 grid gap-5 md:grid-cols-2">
         {posts.map((post) => (
           <StaggerItem key={post.slug}>

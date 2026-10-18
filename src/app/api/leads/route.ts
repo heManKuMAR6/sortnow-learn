@@ -19,6 +19,17 @@ function cleanPath(value: unknown): string {
   return value.slice(0, 300);
 }
 
+/** Keep only utm_* tags from the page's query string, e.g. "?utm_campaign=skill". */
+function utmQuery(value: unknown): string {
+  if (typeof value !== "string" || value.length > 600) return "";
+  const kept = new URLSearchParams();
+  for (const [key, val] of new URLSearchParams(value)) {
+    if (/^utm_[a-z]{1,20}$/.test(key) && /^[A-Za-z0-9_.-]{1,60}$/.test(val)) kept.append(key, val);
+  }
+  const query = kept.toString();
+  return query ? `?${query}` : "";
+}
+
 export async function POST(request: Request) {
   const limited = tooMany(request, "leads", 15, 10 * 60_000);
   if (limited) return limited;
@@ -36,7 +47,7 @@ export async function POST(request: Request) {
   const email = typeof row.email === "string" ? row.email.trim().toLowerCase() : "";
   const phoneRaw = typeof row.phone === "string" ? row.phone.trim() : "";
   const phone = phoneRaw.length > 0 ? phoneRaw.slice(0, 40) : null;
-  const path = cleanPath(row.path);
+  const path = cleanPath(cleanPath(row.path).split("?")[0] + utmQuery(row.utm));
   const source = path.startsWith("/ig") ? "instagram" : "site";
   const campaign = typeof row.campaign === "string" && SRC_RE.test(row.campaign) ? row.campaign.toLowerCase() : null;
   const userAgent = (request.headers.get("user-agent") ?? "").slice(0, 300) || null;
@@ -81,18 +92,19 @@ export async function POST(request: Request) {
         campaign,
         user_agent: userAgent,
       });
-      if (error) throw new Error(error.message);
+      // 23505: this email is already on the list for this page. They are known, so unlock.
+      if (error && error.code !== "23505") throw new Error(error.message);
       saved = true;
     } catch (error) {
       console.error("[leads] database insert failed:", error instanceof Error ? error.message : error);
     }
-  }
-  if (!saved) {
+  } else {
+    // Local and demo only. On Vercel this file does not last, so it is never a fallback there.
     try {
       await appendLocalLead(lead);
       saved = true;
     } catch (error) {
-      console.error("[leads] local fallback failed:", error instanceof Error ? error.message : error);
+      console.error("[leads] local save failed:", error instanceof Error ? error.message : error);
     }
   }
   if (!saved) {

@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { IgLanding } from "@/components/IgLanding";
 import { LockedDrop } from "@/components/LockedDrop";
 import { getIgPost, igPosts } from "@/lib/ig-posts";
+import { isSupabaseConfigured } from "@/lib/env";
 import { isLeadUnlocked, LEAD_COOKIE } from "@/lib/lead-cookie";
+import { createClient } from "@/lib/supabase/server";
 
 type Params = { slug: string };
 
@@ -27,6 +29,19 @@ export default async function IgPostPage({ params }: { params: Promise<Params> }
   const { slug } = await params;
   const post = getIgPost(slug);
   if (!post) notFound();
-  const unlocked = isLeadUnlocked((await cookies()).get(LEAD_COOKIE)?.value);
-  return unlocked ? <IgLanding post={post} /> : <LockedDrop post={post} />;
+  // Open for anyone who left their details here, or who is signed in.
+  const leadOk = isLeadUnlocked((await cookies()).get(LEAD_COOKIE)?.value);
+  const signedIn = await isSignedIn();
+  return leadOk || signedIn ? <IgLanding post={post} signedIn={signedIn} /> : <LockedDrop post={post} />;
+}
+
+async function isSignedIn(): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    return data.user != null;
+  } catch {
+    return false;
+  }
 }
