@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { GoogleButton, googleEnabled } from "@/components/GoogleButton";
 import { PuzzleMark } from "@/components/PuzzleMark";
 import { Reveal } from "@/components/Reveal";
+import { SIGNUP_CONSENT_TEXT } from "@/lib/consent";
 import type { IgPost } from "@/lib/ig-posts";
 
 const marks = [25, 50, 75, 100] as const;
@@ -53,7 +55,15 @@ function ReelStill({ slug, title }: { slug: string; title: string }) {
   );
 }
 
-function CopyPrompt({ text }: { text: string }) {
+function CopyPrompt({
+  text,
+  label = "Copy the prompt",
+  track = "ig-copy-prompt",
+}: {
+  text: string;
+  label?: string;
+  track?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -75,13 +85,13 @@ function CopyPrompt({ text }: { text: string }) {
   }
 
   return (
-    <button type="button" className="pill-coral" data-track="ig-copy-prompt" onClick={() => void copy()}>
-      {copied ? "Copied" : "Copy the prompt"}
+    <button type="button" className="pill-coral" data-track={track} onClick={() => void copy()}>
+      {copied ? "Copied" : label}
     </button>
   );
 }
 
-export function IgLanding({ post }: { post: IgPost }) {
+export function IgLanding({ post, signedIn = false }: { post: IgPost; signedIn?: boolean }) {
   const pathname = usePathname();
 
   useEffect(() => {
@@ -115,13 +125,62 @@ export function IgLanding({ post }: { post: IgPost }) {
           </div>
         </Reveal>
 
+        {!signedIn && googleEnabled ? (
+          <Reveal className="mt-10" delay={0.05}>
+            <div className="card grid max-w-xl gap-3 p-5">
+              <p className="font-medium text-ink">
+                Save your spot — continue with Google to keep your progress and get the next drop.
+              </p>
+              <GoogleButton next={`/ig/${post.slug}`} track="ig-save-spot-google" consentText={SIGNUP_CONSENT_TEXT} />
+            </div>
+          </Reveal>
+        ) : null}
+
+        {post.skillFile ? (
+          <Reveal className="mt-14" delay={0.05}>
+            <h2 className="text-2xl">The skill from the reel</h2>
+            <p className="mt-2 text-sm text-secondary">
+              <code className="prompt-path">{post.skillFile.path}</code>
+            </p>
+            <pre className="prompt-block prompt-file">{post.skillFile.content}</pre>
+            <div className="mt-4">
+              <CopyPrompt text={post.skillFile.content} label="Copy SKILL.md" track="ig-copy-skillmd" />
+            </div>
+          </Reveal>
+        ) : null}
+
         <Reveal className="mt-14" delay={0.05}>
-          <h2 className="text-2xl">Try this prompt</h2>
+          <h2 className="text-2xl">{post.prompts?.length ? "Build your own" : "Try this prompt"}</h2>
+          {post.prompts?.length ? <h3 className="mt-5 text-xl">Turn a task you repeat into a skill</h3> : null}
           <pre className="prompt-block">{post.prompt}</pre>
           <div className="mt-4">
-            <CopyPrompt text={post.prompt} />
+            <CopyPrompt text={post.prompt} track={post.prompts?.length ? "ig-copy-prompt-0" : "ig-copy-prompt"} />
           </div>
+          {post.prompts?.map((p, i) => (
+            <div key={p.title} className="mt-10">
+              <h3 className="text-xl">{p.title}</h3>
+              <p className="mt-1 text-sm text-secondary">{p.when}</p>
+              <pre className="prompt-block">{p.body}</pre>
+              <div className="mt-4">
+                <CopyPrompt text={p.body} track={`ig-copy-prompt-${i + 1}`} />
+              </div>
+            </div>
+          ))}
         </Reveal>
+
+        {post.ideas?.length ? (
+          <Reveal className="mt-14" delay={0.05}>
+            <h2 className="text-2xl">Starter skill ideas</h2>
+            <ul className="mt-4 grid max-w-xl gap-3">
+              {post.ideas.map((idea) => (
+                <li key={idea} className="flex gap-3">
+                  <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-mint" />
+                  <span>{idea}</span>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        ) : null}
 
         {post.resources?.length ? (
           <Reveal className="mt-14" delay={0.05}>

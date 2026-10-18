@@ -15,3 +15,7 @@ export const SIGNUP_CONSENT_TEXT =
 
 /** Stored as `consent_text`, e.g. "2026-10-v1: I agree that…". */
 export const stamp = (text: string) => `${CONSENT_VERSION}: ${text}`;
+
+/** Unlocking a reel drop with Google: a free account plus the same drop-and-newsletter terms. */
+export const GOOGLE_LEAD_CONSENT_TEXT =
+  "I agree that sortNow can create a free account with my Google name and email, send me this drop and a weekly newsletter, and record my activity on the site as the privacy notice explains. I can unsubscribe in one click or ask for my data to be deleted at any time.";

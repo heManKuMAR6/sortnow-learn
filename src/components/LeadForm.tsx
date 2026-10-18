@@ -3,11 +3,19 @@
 import { FormEvent, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ConsentCheck } from "@/components/ConsentCheck";
+import { googleEnabled } from "@/components/GoogleButton";
 import { readCampaign } from "@/lib/campaign";
 import { LEAD_CONSENT_TEXT } from "@/lib/consent";
 
 /** Name, email and phone, plus an agreement box. Submitting unlocks the page for this browser. */
-export function LeadForm({ cta = "Unlock this drop" }: { cta?: string }) {
+export function LeadForm({
+  cta = "Unlock this drop",
+  dividerAbove = false,
+}: {
+  cta?: string;
+  /** Put "or use your email" above the form when a Google button sits on top of it. */
+  dividerAbove?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [name, setName] = useState("");
@@ -26,7 +34,7 @@ export function LeadForm({ cta = "Unlock this drop" }: { cta?: string }) {
       const response = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone, consent, path: pathname, campaign: readCampaign(), website }),
+        body: JSON.stringify({ name, email, phone, consent, path: pathname, utm: window.location.search, campaign: readCampaign(), website }),
       });
       const body = (await response.json()) as { ok?: boolean; error?: string };
       if (!response.ok || !body.ok) {
@@ -43,6 +51,11 @@ export function LeadForm({ cta = "Unlock this drop" }: { cta?: string }) {
 
   return (
     <form onSubmit={(event) => void onSubmit(event)} className="grid gap-3">
+      {dividerAbove && googleEnabled ? (
+        <p className="divider-text">
+          <span>or use your email</span>
+        </p>
+      ) : null}
       <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
         <label>
           Website
